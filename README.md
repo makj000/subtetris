@@ -15,10 +15,10 @@ This creates cascading chain clears, surviving blocks tumbling down, and a puzzl
 ### Key Rules
 
 - **Row clear:** subtract the row's minimum value; cells at 0 vanish
-- **Survivors fall:** surviving cells drop an extra `minValue − 1` rows
-- **Multi-row bonus:** clearing multiple rows simultaneously drops survivors an additional `clearedRows − 1` rows
-- **Chains:** if falling survivors form new full rows, the process repeats with a ×1.5 chain multiplier
-- **MAX # setting:** controls the range of numbers (1 = all ones, classic Tetris feel; 4 = numbers 1–4)
+- **Cascade gravity:** cells above gaps fall into them; connected hanging blocks fall together
+- **Chains:** if falling blocks form new full rows, the process repeats
+- **MAX # setting:** controls the number range (1 = all ones, classic Tetris feel; 4 = numbers 1–4)
+- **Support Model:** `GND` (ground-based gravity) or `CLU` (cluster-based gravity)
 - **Score:** standard Tetris scoring × level; +1 per soft-drop row
 - **Speed:** constant drop speed (NES Tetris level 1 pace, ~800ms)
 
@@ -34,7 +34,6 @@ This creates cascading chain clears, surviving blocks tumbling down, and a puzzl
 | ↑ | Rotate |
 | Space / P | Pause / Unpause |
 | N | New game |
-| S | Toggle sound |
 
 ### Mobile (touch)
 | Gesture | Action |
@@ -42,7 +41,7 @@ This creates cascading chain clears, surviving blocks tumbling down, and a puzzl
 | Tap board | Rotate |
 | Flick left/right | Move |
 | Drag down | Soft drop |
-| PAUSE button | Pause / Resume |
+| Bottom buttons | Controls + settings |
 
 ---
 
@@ -59,13 +58,16 @@ This creates cascading chain clears, surviving blocks tumbling down, and a puzzl
 ## Project Structure
 
 ```
-index.html          # Entire game — HTML, CSS, JS in one file
+index.html              # Entire game — HTML, CSS, JS in one file
 capacitor.config.json
 package.json
-www/                # Capacitor web dir (copy of index.html for iOS build)
-ios/                # Xcode project (Capacitor-generated)
-changelog.txt       # Full version history
-prompt.md           # Living design spec
+www/                    # Capacitor web dir (copy of index.html for iOS build)
+ios/
+  App/
+    Subtetris.xcodeproj # Xcode project (Capacitor-generated)
+icons/                  # App icon assets
+changelog.txt           # Full version history
+CLAUDE.md               # Living design spec
 ```
 
 ---
@@ -98,4 +100,4 @@ npm run cap:ios
 
 See [changelog.txt](changelog.txt) for full version history.
 
-Current version: **v1.5.102**
+Current version: **v1.5.111**
