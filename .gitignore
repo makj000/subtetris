@@ -4,3 +4,16 @@ node_modules/
 xcuserdata/
 DerivedData/
 .build/
+
+# iOS build artifacts
+ios/App/build
+ios/App/Pods
+ios/App/output
+ios/App/App/public
+
+# Cordova plugins for Capacitor
+ios/capacitor-cordova-ios-plugins
+
+# Generated Capacitor config files
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
