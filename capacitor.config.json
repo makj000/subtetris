@@ -1,0 +1,12 @@
+{
+  "appId": "com.subtetris.app",
+  "appName": "Subtetris",
+  "webDir": "www",
+  "server": {
+    "iosScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0a1628"
+  }
+}

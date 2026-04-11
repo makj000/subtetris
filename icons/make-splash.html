@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Subtetris Splash Generator</title>
+  <style>
+    body { background: #111; display: flex; flex-direction: column; align-items: center;
+           justify-content: center; min-height: 100vh; font-family: monospace; color: #eee; gap: 20px; }
+    #preview { box-shadow: 0 8px 40px rgba(0,0,0,0.7); border-radius: 8px; width: 373px; height: 497px; }
+    button { background: #c87941; border: none; color: #fff; font-size: 16px; font-family: monospace;
+             padding: 12px 32px; border-radius: 8px; cursor: pointer; letter-spacing: 2px; }
+    button:hover { background: #e08a50; }
+    p { color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+<canvas id="preview" width="2064" height="2752"></canvas>
+<button onclick="download()">DOWNLOAD splash.png</button>
+<p>iPhone-sized screenshot (1170×2532 @3x)</p>
+
+<script>
+const palette = [
+  'hsl(30, 85%, 65%)',
+  'hsl(22, 90%, 44%)',
+  'hsl(14, 88%, 27%)',
+  'hsl(6,  80%, 15%)',
+];
+
+// Fake board: 20 rows × 10 cols. null = empty, {num} = block
+const ROWS = 20, COLS = 10;
+const board = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+
+// Fill bottom 13 rows with a realistic-looking stack
+const stack = [
+  // row 7 — sparse top of stack
+  [null,null,null,null,null,null,null,null,null,null],
+  [null,null,null,2,   null,null,null,null,null,null],
+  [null,null,1,   2,   null,null,3,   null,null,null],
+  [null,1,   1,   2,   3,   null,3,   null,2,   null],
+  [null,1,   2,   1,   3,   2,   3,   1,   2,   null],
+  [1,   2,   2,   1,   3,   2,   1,   3,   2,   1   ],
+  [1,   1,   2,   3,   2,   1,   2,   3,   1,   2   ],
+  [2,   1,   3,   2,   1,   3,   2,   1,   3,   2   ],
+  [1,   2,   1,   2,   3,   2,   1,   2,   1,   3   ],
+  [2,   3,   2,   1,   2,   1,   3,   2,   3,   1   ],
+  [1,   2,   3,   2,   1,   2,   1,   3,   2,   1   ],
+  [3,   1,   2,   1,   3,   2,   1,   2,   1,   3   ],
+  [2,   3,   1,   3,   2,   1,   3,   1,   2,   1   ],
+];
+for (let r = 0; r < stack.length; r++) {
+  for (let c = 0; c < COLS; c++) {
+    const v = stack[r][c];
+    board[ROWS - stack.length + r][c] = v !== null ? {num: v} : null;
+  }
+}
+
+// Current falling piece — L-shape at top center
+const piece = [
+  {r: 2, c: 4, num: 1},
+  {r: 3, c: 4, num: 1},
+  {r: 4, c: 4, num: 1},
+  {r: 4, c: 5, num: 1},
+];
+
+// Next piece — S-shape
+const nextPiece = [
+  {r: 0, c: 1, num: 2},
+  {r: 0, c: 2, num: 2},
+  {r: 1, c: 0, num: 2},
+  {r: 1, c: 1, num: 2},
+];
+
+function drawBlock(ctx, x, y, B, num, alpha) {
+  const col = palette[num - 1];
+  const r = B * 0.08;
+  const bw = B * 0.13;
+  ctx.save();
+  ctx.globalAlpha = alpha ?? 1;
+
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = B * 0.15;
+  ctx.shadowOffsetY = B * 0.06;
+  ctx.beginPath(); ctx.roundRect(x, y, B, B, r);
+  ctx.fillStyle = col; ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.beginPath(); ctx.roundRect(x, y, B, B, r); ctx.clip();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.beginPath();
+  ctx.moveTo(x, y+B); ctx.lineTo(x, y); ctx.lineTo(x+B, y);
+  ctx.lineTo(x+B-bw, y+bw); ctx.lineTo(x+bw, y+bw); ctx.lineTo(x+bw, y+B-bw);
+  ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.moveTo(x+B, y); ctx.lineTo(x+B, y+B); ctx.lineTo(x, y+B);
+  ctx.lineTo(x+bw, y+B-bw); ctx.lineTo(x+B-bw, y+B-bw); ctx.lineTo(x+B-bw, y+bw);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.font = `bold ${B * 0.52}px "Courier New", monospace`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = B * 0.08;
+  ctx.fillText(num, x + B/2, y + B/2 + B*0.03);
+  ctx.restore();
+}
+
+function drawGame(ctx, W, H) {
+  // Background
+  ctx.fillStyle = '#0a1628';
+  ctx.fillRect(0, 0, W, H);
+
+  const HEADER = H * 0.105;
+  const FOOTER = H * 0.055;
+  const boardH = H - HEADER - FOOTER;
+  const B = boardH / ROWS;
+  const boardW = B * COLS;
+  const bx = (W - boardW) / 2;
+  const by = HEADER;
+
+  // ── Header ──
+  ctx.fillStyle = '#0d1f3c';
+  ctx.fillRect(0, 0, W, HEADER);
+  ctx.strokeStyle = '#1e3a5f';
+  ctx.lineWidth = W * 0.003;
+  ctx.beginPath(); ctx.moveTo(0, HEADER); ctx.lineTo(W, HEADER); ctx.stroke();
+
+  // Brand name
+  ctx.save();
+  ctx.font = `bold ${HEADER * 0.28}px "Courier New", monospace`;
+  ctx.fillStyle = '#d98a4e';
+  ctx.shadowColor = 'rgba(210,130,60,0.5)'; ctx.shadowBlur = HEADER * 0.15;
+  ctx.textBaseline = 'top';
+  ctx.fillText('SUBTETRIS', W * 0.05, HEADER * 0.1);
+  ctx.restore();
+
+  // Version
+  ctx.save();
+  ctx.font = `${HEADER * 0.11}px "Courier New", monospace`;
+  ctx.fillStyle = '#667';
+  ctx.textBaseline = 'top';
+  ctx.fillText('v1.5.48', W * 0.05, HEADER * 0.42);
+  ctx.restore();
+
+  // Score / Lvl / Lines
+  const stats = [
+    {label:'SCORE', val:'12345', x: W * 0.05},
+    {label:'LVL',   val:'3',     x: W * 0.38},
+    {label:'LINES', val:'28',    x: W * 0.52},
+  ];
+  for (const s of stats) {
+    ctx.save();
+    ctx.textBaseline = 'top';
+    ctx.font = `${HEADER * 0.12}px "Courier New", monospace`;
+    ctx.fillStyle = '#778';
+    ctx.fillText(s.label, s.x, HEADER * 0.58);
+    ctx.font = `bold ${HEADER * 0.28}px "Courier New", monospace`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(s.val, s.x, HEADER * 0.68);
+    ctx.restore();
+  }
+
+  // Next piece preview (top-right of header)
+  const prevSize = HEADER * 0.85;
+  const prevX = W - prevSize - W * 0.03;
+  const prevY = (HEADER - prevSize) / 2;
+  const nb = prevSize / 5;
+  // find bounds of next piece
+  const minR = Math.min(...nextPiece.map(p=>p.r));
+  const maxR = Math.max(...nextPiece.map(p=>p.r));
+  const minC = Math.min(...nextPiece.map(p=>p.c));
+  const maxC = Math.max(...nextPiece.map(p=>p.c));
+  const pw = (maxC - minC + 1) * nb;
+  const ph = (maxR - minR + 1) * nb;
+  const pox = prevX + (prevSize - pw) / 2 - minC * nb;
+  const poy = prevY + (prevSize - ph) / 2 - minR * nb;
+  for (const p of nextPiece) {
+    drawBlock(ctx, pox + p.c * nb, poy + p.r * nb, nb, p.num);
+  }
+
+  // ── Board background ──
+  ctx.fillStyle = '#071020';
+  ctx.fillRect(bx, by, boardW, boardH);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(30,58,95,0.4)';
+  ctx.lineWidth = 0.5;
+  for (let r = 0; r <= ROWS; r++) {
+    ctx.beginPath(); ctx.moveTo(bx, by + r*B); ctx.lineTo(bx+boardW, by + r*B); ctx.stroke();
+  }
+  for (let c = 0; c <= COLS; c++) {
+    ctx.beginPath(); ctx.moveTo(bx + c*B, by); ctx.lineTo(bx + c*B, by+boardH); ctx.stroke();
+  }
+
+  // Board border
+  ctx.strokeStyle = '#1e3a5f';
+  ctx.lineWidth = W * 0.004;
+  ctx.strokeRect(bx, by, boardW, boardH);
+
+  // Draw board blocks
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (board[r][c]) drawBlock(ctx, bx + c*B, by + r*B, B, board[r][c].num);
+    }
+  }
+
+  // Draw current falling piece
+  for (const p of piece) {
+    drawBlock(ctx, bx + p.c*B, by + p.r*B, B, p.num);
+  }
+
+  // Ghost piece (faded, at bottom of where piece would land)
+  // find drop distance
+  let drop = 0;
+  while (true) {
+    const next = drop + 1;
+    const blocked = piece.some(p => {
+      const nr = p.r + next;
+      const nc = p.c;
+      return nr >= ROWS || (board[nr] && board[nr][nc]);
+    });
+    if (blocked) break;
+    drop++;
+  }
+  if (drop > 0) {
+    for (const p of piece) {
+      drawBlock(ctx, bx + p.c*B, by + (p.r+drop)*B, B, p.num, 0.18);
+    }
+  }
+
+  // ── Footer controls ──
+  const fy = H - FOOTER;
+  ctx.fillStyle = '#0a1628';
+  ctx.fillRect(0, fy, W, FOOTER);
+  ctx.strokeStyle = '#1e3a5f';
+  ctx.lineWidth = W * 0.003;
+  ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(W, fy); ctx.stroke();
+
+  const btnLabels = ['PAUSE', 'NUMS: 1-2', 'NEW GAME'];
+  const btnW = W / 3;
+  for (let i = 0; i < 3; i++) {
+    const bx2 = i * btnW + btnW * 0.1;
+    const bw2 = btnW * 0.8;
+    const bh = FOOTER * 0.65;
+    const by2 = fy + (FOOTER - bh) / 2;
+    ctx.fillStyle = '#0d1f3c';
+    ctx.strokeStyle = '#1e3a5f';
+    ctx.lineWidth = W * 0.002;
+    ctx.beginPath(); ctx.roundRect(bx2, by2, bw2, bh, bh * 0.15);
+    ctx.fill(); ctx.stroke();
+    ctx.save();
+    ctx.font = `${FOOTER * 0.22}px "Courier New", monospace`;
+    ctx.fillStyle = '#ccd';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(btnLabels[i], bx2 + bw2/2, by2 + bh/2);
+    ctx.restore();
+  }
+}
+
+// Single canvas — full res, scaled down via CSS for preview
+const prev = document.getElementById('preview');
+const pctx = prev.getContext('2d');
+drawGame(pctx, 2064, 2752);
+
+function download() {
+  const a = document.createElement('a');
+  a.download = 'splash.png';
+  a.href = prev.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>

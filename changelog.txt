@@ -1,0 +1,446 @@
+Subtetris — Changelog
+=====================
+
+v1.5.103 (2026-04-08)
+  - Falling rules rewritten per CLAUDE.md spec:
+    · Rows processed one at a time (topmost first), not all simultaneously
+    · Removed minNum-1 and fullRows-1 extra fall bonuses
+    · New findHangingBlocks(): BFS from bottom row finds all blocks not connected to ground via 4-directional adjacency
+    · New applyGravityUntilStable(): drops all hanging blocks 1 row, repeats until none remain
+    · Score formula updated: 100 × level × minNum^1.5 × chainMult per row
+
+v1.5.102 (2026-04-08)
+  - Score rendered digit-by-digit: leading positions current score hasn't reached show record digit in navy (#1e3a5c); active positions show current score in burnt orange (#d4863c)
+  - Removed overlay/visibility approach; single renderScoreDigits() handles both desktop and mobile
+
+v1.5.101 (2026-04-08)
+  - Record score hidden (visibility:hidden) once scoring begins instead of trying to paint over it; fully clean burnt orange current score with no bleed-through
+
+v1.5.100 (2026-04-08)
+  - Current score given solid panel background when score > 0, fully covering the navy record behind it; score is now fully legible in burnt orange once game begins
+
+v1.5.99 (2026-04-08)
+  - Score hidden (color = background) at game start; turns burnt orange once score > 0
+  - Record score always visible in navy behind current score
+  - Drop speed is now constant (NES level-1 ~800ms); no longer speeds up on level-up
+  - .claudeignore added: screenshots/, node_modules/, ios/, www/, icons/ excluded from context
+
+v1.5.98 (2026-04-08)
+  - Current score color changed to burnt orange (#d4863c) with warm glow
+  - Record score color changed to navy blue (#1e3a5c) — visible but clearly secondary
+  - "SUB" in title rendered in light steel blue (#7ab8d4), "TETRIS" stays orange-gold (#ffaa44)
+
+v1.5.97 (2026-04-07)
+  - Fixed DSEG font family name: 'DSEG7-Classic' (hyphen, not space) — now renders correct sharp square-ended segments
+
+v1.5.96 (2026-04-07)
+  - Score display uses DSEG7 Classic (7-segment LED/LCD font) via jsDelivr CDN
+  - Applied to current score, best score overlay, and mobile header score
+
+v1.5.95 (2026-04-07)
+  - Best score now overlays at the exact same position as current score using absolute positioning; faded dark color behind the bright current score; removed separate BEST label row
+
+v1.5.94 (2026-04-07)
+  - Drop speed now uses the NES Tetris frame table (48→1 frames at 60fps) instead of the linear formula
+  - Level 1 starts at 800ms (was 500ms); reaches ~17ms at level 29+
+  - Soft drop updated from 50ms to classic 33ms (2 frames)
+
+v1.5.93 (2026-04-07)
+  - High score persisted in localStorage (key: subtetris_hi)
+  - Desktop sidebar: faded "BEST" label + score shown below current score
+  - Mobile header: faded best score shown beneath the current score in score column
+  - On game over with new record: overlay shows "NEW RECORD!" with trophy and score instead of "GAME OVER"
+
+v1.5.92 (2026-04-07)
+  - 🔊 moved to row 1 col 6; row 2 cols 1–6 are now all blank (reserved for future 320×50 ad banner)
+  - Layout: row1=[←][→][MAX][PAUSE][NEW][🔊][↺], row2=[blank×6][▼]
+
+v1.5.91 (2026-04-07)
+  - "SUBTETRIS" name made more prominent: larger font (20px mobile / 24px desktop), brighter orange-gold (#ffaa44), strong dual-layer orange glow text-shadow
+
+v1.5.90 (2026-04-07)
+  - Preview (Next) section given distinct dark background (#040c18) with brighter blue border; drawPreview fills background instead of clearing to transparent
+  - Score values: pure white, tabular numerals, subtle blue glow text-shadow for legibility; same treatment on mobile header scores
+
+v1.5.89 (2026-04-07)
+  - Filled all 14 slots in the 2×7 touch grid with blank (non-interactive, dark) buttons
+  - Hidden the gesture hint text bar (#mob-hints)
+
+v1.5.88 (2026-04-07)
+  - ↺ moved to column 7 row 1 (where ▼ was); ▼ moved to column 7 row 2 (bottom-right corner)
+  - Layout: row1=[←][→][MAX][PAUSE][NEW][ ][↺], row2=[ ][ ][ ][🔊][ ][ ][▼]
+
+v1.5.87 (2026-04-07)
+  - Paused state no longer resumes on lone modifier keys (Shift, Command/Meta, Control, Alt, CapsLock, Tab)
+
+v1.5.86 (2026-04-07)
+  - Bottom touch controls redesigned as a 2×7 grid (7 columns, 2 rows, 50×50px buttons, 4px gap)
+  - Row 1: [←][→][MAX][PAUSE][NEW][↺][▼]; Row 2: [🔊] at column 4 (centered)
+  - MAX button now cycles downward: 4→3→2→1→4
+
+v1.5.85 (2026-04-07)
+  - Fixed S/Z piece rotation: removed 2-state snap-back; S/Z now use standard 4-state rotation
+    (rotate() applied 4× returns to original; two rotations correctly produce 180° result)
+
+v1.5.84 (2026-04-07)
+  - PAUSE and 🔊 now precisely centered on screen: #tc-util uses position:absolute; left:50%; translateX(-81px)
+  - 81px = col1(50px) + gap(6px) + half of col2(25px)
+
+v1.5.83 (2026-04-07)
+  - "NEW GAME" renamed to "NEW"; moved to top row right of PAUSE → top row: [MAX][PAUSE][NEW]
+  - 🔊 centered in bottom row (grid-column: 2 of 3-column grid)
+  - #tc-util changed from 2×2 to 3-column grid
+
+v1.5.82 (2026-04-07)
+  - Utility buttons (MAX, PAUSE, NEW GAME, 🔊) now centered on screen via margin:0 auto (#tc-util 2×2 grid)
+  - Bottom bar restructured: #tc-lr (← → far left) | #tc-util (centered) | #tc-rd (↺/▼ far right)
+  - Updated prompt.md with permanent layout rules
+
+v1.5.81 (2026-04-07)
+  - All buttons stay 50×50px squares (no stretching to fill flexible column)
+  - Space between buttons is intentional; col 3 buttons centered, col 4 buttons right-aligned
+  - Permanent rules recorded in prompt.md
+
+v1.5.80 (2026-04-07)
+  - ← → ↺ ▼ buttons: burnt orange background (#7a3510, .tc-action class)
+  - MAX, PAUSE, NEW GAME, 🔊 buttons: light navy blue background (#1a3a6a)
+  - Removed burnt orange special styling from NEW GAME
+
+v1.5.79 (2026-04-07)
+  - ← → now flush to far-left edge of bottom bar; ↺ ▼ flush to far-right edge
+  - Grid columns changed to 50px 50px 1fr 50px — middle column flexible, edges fixed
+
+v1.5.78 (2026-04-07)
+  - Renamed NUMS button to MAX; label now shows "MAX n" (e.g. "MAX 4") instead of "NUMS 1-n"
+
+v1.5.77 (2026-04-07)
+  - Fixed ← → to be side by side (not stacked); both in bottom row far left
+  - Final layout: row1=[NUMS][PAUSE][NEW GAME][↺], row2=[←][→][🔊][▼]
+  - Permanent rule recorded in prompt.md: ← left of →, both far-left; ↺ above ▼, both far-right
+
+v1.5.76 (2026-04-07)
+  - Touch controls: ↺ now directly above ▼ (same grid column); PAUSE and NEW GAME now 50×50px squares
+  - Layout is a clean 4×2 grid: [←][NUMS][PAUSE][↺] / [→][NEW GAME][🔊][▼]
+  - Updated prompt.md with current touch control layout
+
+v1.5.75 (2026-04-07)
+  - Changed default NUMS setting from 1-2 to 1-4
+
+v1.5.74 (2026-04-07)
+  - Bottom controls: ← → moved to far left, ↺ ▼ moved to far right, spacer fills the gap
+  - Row 1: [NUMS flex][PAUSE flex][NEW GAME flex][🔊 50px]
+  - Row 2: [← 50px][→ 50px][spacer][↺ 50px][▼ 50px]
+  - Updated prompt.md and changelog to reflect current layout
+
+v1.5.73 (2026-04-07)
+  - Moved gesture hint bar from below top header to above bottom controls
+  - Updated hint text to: "swipe for left/right/drop, tap for rotate"
+
+v1.5.72 (2026-04-07)
+  - All touch control buttons fixed at exactly 50×50px
+
+v1.5.71 (2026-04-07)
+  - Touch controls redesigned as a 4×2 grid; all buttons square (aspect-ratio: 1)
+  - Sound button now shows 🔊/🔇 speaker icon instead of text; positioned below NEW GAME (col 3, row 2)
+  - PAUSE moved right, now next to NEW GAME (col 2, row 1)
+  - Layout: row 1 = [NUMS][PAUSE][NEW GAME][↺], row 2 = [←][→][🔊][▼]
+
+v1.5.70 (2026-04-07)
+  - Added Web Audio API sound effects: move, rotate, lock, clear, tetris (4-row), level-up, game over
+  - Added SND: ON/OFF toggle button (mobile + desktop sidebar); keyboard shortcut S
+  - Preview piece drawn at same block size as board pieces (BLOCK=30px); canvas resized to 120×90
+  - Fixed canvas aspect ratio on mobile: blocks now always render square (height:100%; width:auto)
+
+v1.5.69 (2026-04-07)
+  - Mobile layout: moved ← → to bottom bar (left-aligned); brought back ▼ (drop) and ↺ (rotate)
+  - Row 1: PAUSE | NUMS | SND | NEW GAME | ↺ (right); Row 2: ← | → | ▼ (right)
+  - Removed tall side-column arrow buttons from board area
+
+v1.5.68 (2026-04-07)
+  - Falling rule: surviving blocks also fall extra (fullRows − 1) rows on multi-row clears
+    Total fall = (minNum − 1) + (fullRows − 1), capped by available space
+
+v1.5.67 (2026-04-07)
+  - Falling rule: surviving blocks fall (minNum − 1) rows instead of minNum rows
+
+v1.5.66 (2026-04-07)
+  - Fixed S/Z piece rotation instability: limited to 2 states (H↔V) with canonical template snap-back
+
+v1.5.65 (2026-04-07)
+  - Fixed I-piece horizontal wobble during rotation using per-state x-offsets (Nintendo-style)
+
+v1.5.64 (2026-04-07)
+  - Any control button press while paused now resumes the game
+
+v1.5.63 (2026-04-07)
+  - Removed soft-drop and rotate touch buttons; gestures only on mobile for those actions
+  - Added gesture hints bar: "swipe ↓ drop · tap ↺ rotate"
+  - Desktop: hides ← → ▼ ↺ buttons
+
+v1.5.62 (2026-04-07)
+  - Suppressed long-press context menu and text selection on mobile
+
+v1.5.61 (2026-04-07)
+  - Made left/right touch buttons 4× as tall as wide
+
+v1.5.60 (2026-04-07)
+  - Smooth number transition: surviving blocks cross-fade old→new number over CLEAR_MS
+
+v1.5.59 (2026-04-07)
+  - Cascade fall: blocks above vacated cells fall down (stack gravity)
+  - Chain bonus: ×1.5 per chain level on repeated clears
+
+v1.5.58 (2026-04-07)
+  - Removed applyGravity reward (made game too easy)
+
+v1.5.57 (2026-04-07)
+  - MAX # selector: buttons 1–4 in sidebar and NUMS cycle button on mobile
+
+v1.5.56 (2026-04-07)
+  - Mobile layout overhaul: top stats bar, board fills height, touch controls at bottom
+
+v1.5.55 (2026-04-07)
+  - App icon and splash screen asset generators (make-icon.html, make-splash.html)
+
+v1.5.54 (2026-04-07)
+  - GitHub Pages: privacy.html and support.html at makj000.github.io/subtetris
+
+v1.5.53 (2026-04-07)
+  - Capacitor iOS project setup (com.subtetris.app)
+
+v1.5.52 (2026-04-07)
+  - Floating score popup animation on line clear
+
+v1.5.51 (2026-04-07)
+  - Ghost piece (faded landing position preview)
+
+v1.5.50 (2026-04-07)
+  - Initial mobile-first rewrite with canvas scaling, safe-area insets
+
+v1.5.49 (2026-04-07)
+  - Contiguous stack above a gap falls together with the block that moved
+
+v1.5.48 (2026-04-07)
+  - Score display zero-padded to 5 digits; side buttons shifted up one button height
+
+v1.5.47 (2026-04-07)
+  - Created icons/make-icon.html icon generator tool
+
+v1.5.46 (2026-04-07)
+  - Removed special highlight from NEW GAME button (matches plain PAUSE style)
+
+v1.5.45 (2026-04-07)
+  - Right-side buttons (↺ and →) moved one button height higher than left side
+
+v1.5.44 (2026-04-07)
+  - Canvas stretches to full available height
+
+v1.5.43 (2026-04-07)
+  - Fixed canvas showing only 8 of 10 columns; canvas now scales to fit both dimensions
+
+v1.5.42 (2026-04-07)
+  - Fine-tuned button position to exactly 1/3 screen height from bottom
+
+v1.5.41 (2026-04-07)
+  - Moved all 4 side buttons lower (~1/3 from bottom)
+
+v1.5.40 (2026-04-07)
+  - Lowered left arrow and drop button to align with right arrow
+
+v1.5.39 (2026-04-07)
+  - Fixed right arrow and rotate buttons pushed off screen (min-width: 0 on canvas)
+
+v1.5.38 (2026-04-07)
+  - Moved rotate button above the right arrow button
+
+v1.5.37 (2026-04-07)
+  - Aligned left and right arrow buttons to the same vertical height
+
+v1.5.36 (2026-04-07)
+  - Moved left/right/drop/rotate buttons to the sides of the game canvas
+
+v1.5.35 (2026-04-07)
+  - Reorganized control buttons: ← NUMS ↺ → on row 1, PAUSE NEW GAME ▼ on row 2
+
+v1.5.34 (2026-04-07)
+  - Added Capacitor/iOS config, safe-area insets, viewport-fit=cover
+
+v1.5.33 (2026-04-07)
+  - Exponential scoring: 100 × level × rows^1.8 × avgMin^1.5
+
+v1.5.32 (2026-04-07)
+  - Floating score popups: "+NNN" animates upward on line clear
+
+v1.5.31 (2026-04-07)
+  - All full rows highlighted and subtracted simultaneously in one pass
+
+v1.5.30 (2026-04-07)
+  - Extended cascade to move entire contiguous stack above a zeroed cell
+
+v1.5.29 (2026-04-07)
+  - Surviving blocks on cleared row also fall if cell below is empty
+
+v1.5.28 (2026-04-07)
+  - Added Space key to restart after game over
+
+v1.5.27 (2026-04-07)
+  - Restricted cascade: blocks only fall if directly below cell was zeroed in that pass
+
+v1.5.26 (2026-04-07)
+  - Left-aligned version number with LINES section edge
+
+v1.5.25 (2026-04-07)
+  - Right-aligned version number to line up with LINES section
+
+v1.5.24 (2026-04-07)
+  - Made score section as wide as possible for large numbers
+
+v1.5.23 (2026-04-07)
+  - Moved score stats below name for wider display
+
+v1.5.22 (2026-04-07)
+  - Fixed right-side preview piece clipping; added button graying on game-over/pause
+
+v1.5.21 (2026-04-07)
+  - Preview rendering fix (3rd attempt); added name glow effect
+
+v1.5.20 (2026-04-07)
+  - Preview rendering fix (2nd attempt)
+
+v1.5.19 (2026-04-07)
+  - Made preview piece rendering match board pieces (edge styling, font size)
+
+v1.5.18 (2026-04-07)
+  - Moved soft-drop and rotate buttons to the right side of the control row
+
+v1.5.17 (2026-04-07)
+  - Matched preview block size to board block size (~29px)
+
+v1.5.16 (2026-04-07)
+  - Made four block shades more visually distinct; compacted header and resized arrow buttons
+
+v1.5.15 (2026-04-07)
+  - Made four block shades more distinct (first attempt)
+
+v1.5.14 (2026-04-07)
+  - Changed blocks 3 and 4 to darker burnt orange shades
+
+v1.5.13 (2026-04-07)
+  - Fixed NEXT preview to 90×90px in 96px header; fixed touch buttons not responding
+
+v1.5.12 (2026-04-07)
+  - Fixed NEXT preview centering using actual bounding-box of non-empty cells
+
+v1.5.11 (2026-04-07)
+  - Fixed NEXT preview piece centering to fill top half properly
+
+v1.5.10 (2026-04-07)
+  - Vertically centered NEXT preview within the top bar
+
+v1.5.9 (2026-04-07)
+  - Saved session prompt to prompt.md; enlarged NEXT preview to 68×68px in 72px bar
+
+v1.5.8 (2026-04-07)
+  - Enlarged NEXT preview to ~56×56px in 60px bar
+
+v1.5.7 (2026-04-07)
+  - Adjusted NEXT preview; moved score section to center of top bar
+
+v1.5.6 (2026-04-07)
+  - Fixed NEXT preview alignment: 46×46px, centered with name and scores
+
+v1.5.5 (2026-04-07)
+  - Enlarged NEXT preview to fill nearly full height of top bar
+
+v1.5.4 (2026-04-07)
+  - Shrunk top bar height; made NEXT preview bigger; renamed MAX→NUMS; fixed block aspect ratio
+
+v1.5.3 (2026-04-07)
+  - Removed hard drop button; combined level control into NUMS cycling button
+
+v1.5.2 (2026-04-07)
+  - Added canvas gesture controls (tap=rotate, flick=move, drag=soft-drop); max-number selector
+
+v1.5.1 (2026-04-07)
+  - Merged movement buttons into one row; square buttons (aspect-ratio:1); enlarged NEXT canvas
+
+v1.5.0 (2026-04-07)
+  - Complete rewrite as mobile-first game with touch controls and new layout
+
+v1.4.6 (2026-04-07)
+  - Rounded corners on NEW GAME button
+
+v1.4.5 (2026-04-07)
+  - Fixed GAME OVER popup border artifact; right-aligned score number
+
+v1.4.4 (2026-04-07)
+  - Fixed GAME OVER popup causing black border artifact at top of board
+
+v1.4.3 (2026-04-07)
+  - Fixed clipped texts; styled NEW GAME as visible button; moved version below name
+
+v1.4.2 (2026-04-07)
+  - Made SUBTETRIS name larger again; fixed clipping by reducing letter-spacing
+
+v1.4.1 (2026-04-07)
+  - Made SUBTETRIS name larger in sidebar
+
+v1.4.0 (2026-04-07)
+  - Added "SUBTETRIS" name display on interface (sidebar, burnt orange)
+
+v1.3.9 (2026-04-07)
+  - Renamed game to "Subtetris" (page title)
+
+v1.3.8 (2026-04-07)
+  - Extended cascade gravity to check blocks above recursively
+
+v1.3.7 (2026-04-07)
+  - Falling blocks in slow-motion show intermediate positions during descent
+
+v1.3.6 (2026-04-07)
+  - Added N key shortcut to start a new game at any time
+
+v1.3.5 (2026-04-07)
+  - Added slow-motion animation to row clearing (500ms highlight, subtraction, gravity steps)
+
+v1.3.4 (2026-04-07)
+  - Implemented subtraction-based row clearing: subtract row minimum, remove zeroed blocks, cascade
+
+v1.3.3 (2026-04-07)
+  - Added Space key as alternative to Enter for restarting after game over
+
+v1.3.2 (2026-04-07)
+  - Reduced block number range from 1–4 to 1–2 (two shades of orange)
+
+v1.3.1 (2026-04-07)
+  - Changed block colors to burnt orange; UI to navy blue; moved PAUSE popup to top of screen
+
+v1.3.0 (2026-04-07)
+  - Split Controls and Rules back into separate sidebar boxes
+
+v1.2.9 (2026-04-07)
+  - Final sidebar overflow fix: all content fits without clipping
+
+v1.2.8 (2026-04-07)
+  - Fixed browser-default margin on inner h3 pushing sidebar content down
+
+v1.2.7 (2026-04-07)
+  - Further sidebar layout fix: more flex space, reduced font
+
+v1.2.6 (2026-04-07)
+  - Fixed overlapping sidebar text by combining Controls and Rules into one panel
+
+v1.2.5 (2026-04-07)
+  - Made sidebar match game canvas height exactly; scaled down NEXT preview to fit
+
+v1.2.4 (2026-04-07)
+  - Improved sidebar text legibility; moved version number into a sidebar panel
+
+v1.2.3 (2026-04-07)
+  - Fixed next-piece preview canvas cropping the full piece
+
+v1.2.2 (2026-04-07)
+  - Established version-increment rule; bumped from v1.2.0 for two prior untracked changes
+
+v1.2.0 (2026-04-07)
+  - Initial version: standard Tetris with sidebar, numbers 1–4, navy/orange color scheme

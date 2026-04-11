@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(open:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(chmod +x /Users/kma/dev/game/subtetris/icons/generate-icons.sh)",
+      "Bash(grep -o v1.[0-9]*.[0-9]* /Users/kma/.claude/projects/-Users-kma-dev-game-tetris/b5a78ab0-0b32-4aa2-ab8a-61744750a444.jsonl)",
+      "Bash(python3:*)",
+      "Read(//Users/kma/dev/**)",
+      "Read(//Users/kma/.claude/**)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(npm install:*)",
+      "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
+      "Bash(curl -s http://localhost:3737/api/stats)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''prompts:'''', d[''''totalPrompts''''], ''''sessions:'''', d[''''totalSessions'''']\\)\")"
+    ]
+  }
+}

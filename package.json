@@ -1,0 +1,26 @@
+{
+  "name": "subtetris",
+  "version": "1.5.34",
+  "description": "Subtetris — a Tetris variant where blocks carry numbers and rows are cleared by subtraction",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build step required — single HTML file'",
+    "cap:sync": "cp index.html www/ && npx cap sync ios",
+    "cap:ios": "npx cap open ios",
+    "serve": "python3 -m http.server 3456"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  },
+  "keywords": [
+    "game",
+    "tetris",
+    "html5",
+    "canvas"
+  ],
+  "license": "MIT"
+}
