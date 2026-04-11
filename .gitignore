@@ -17,3 +17,6 @@ ios/capacitor-cordova-ios-plugins
 # Generated Capacitor config files
 ios/App/App/capacitor.config.json
 ios/App/App/config.xml
+
+# Build artifacts (populated by update_mobile_app.sh / cap sync)
+www/index.html
