@@ -36,9 +36,8 @@ After cells vanish, blocks above fall to fill gaps. The process repeats until no
 **Per-wave fall sequence:**
 
 1. **Seed fallers** — the single block directly above each vanished cell falls one row. Blocks at or below the cleared row never move.
-2. **Expand to neighbors** — determine all co-falling blocks before moving anything. Behavior depends on the **Support Model**:
-   - **`ground` (default):** BFS from the bottom row marks all reachable blocks as grounded. Any block with no path to ground is hanging and falls.
-   - **`cluster`:** A block falls if adjacent (4-directional) to any block already falling, unless it is self-grounded (unbroken stack in its own column from its row to the floor). Propagate via column-first DFS — exhaust upward within the column before expanding sideways.
+2. **Expand to neighbors** — determine all co-falling blocks before moving anything. Uses **`cluster` mode** (fixed):
+   - A block falls if adjacent (4-directional) to any block already falling, unless it is self-grounded (unbroken stack in its own column from its row to the floor). Propagate via column-first DFS — exhaust upward within the column before expanding sideways.
 3. **Move** — all decided blocks fall exactly 1 row simultaneously
 4. **Re-check** — if the same row is now full again, repeat from step 1 (chain; bonus score). Otherwise advance downward and continue scanning.
 5. **Final settle** — after no more full rows remain, one BFS pass drops any residual floating blocks (ground-mode safety net)
@@ -84,7 +83,6 @@ Sidebar (130px wide, same height as board):
 - Level + Lines (side by side)
 - Next piece preview canvas (120×90) — blocks drawn at the same size as board blocks (BLOCK px)
 - MAX # selector: 4 buttons [1][2][3][4] — active one highlighted burnt orange
-- **Support Model** toggle: 2 buttons `[GND][CLU]` — active one highlighted burnt orange; `GND` = `ground` mode, `CLU` = `cluster` mode; default `GND`; label "SUPPORT" above in same style as other sidebar labels
 - NEW GAME button (rounded bottom corners, burnt orange style)
 - Controls cheatsheet
 
@@ -117,7 +115,6 @@ Row 2: [  ][  ][  ][ 🔊 ][SUPP][  ][  ]
 - `#touch-ctrl`: `display: grid; grid-template-columns: repeat(7, 50px); grid-template-rows: repeat(2, 50px); gap: 4px; justify-content: center`
 - All buttons are **50×50px squares** — positioned via `grid-column`/`grid-row` inline styles
 - 🔊 sits at `grid-column: 4; grid-row: 2` (centered below PAUSE)
-- SUPP sits at `grid-column: 5; grid-row: 2` (below NEW); cycles `GND`↔`CLU` on tap; label "SUPP\nGND" or "SUPP\nCLU" (two lines, `.tc-txt` style); default `GND`
 - MAX cycles downward: 4→3→2→1→4
 
 **Button styles:**
@@ -184,7 +181,7 @@ No x-delta needed — `idealX = piece.x` is correct for all their rotation state
 - Score display: two overlaid divs — record (navy `#1e3a5c`) behind, current score (burnt orange `#d4863c`) on top. Current score color is `#071020` (invisible) when score = 0, switching to burnt orange once scoring begins
 - Drop speed is constant at NES level-1 pace (~800ms); `nesInterval()` lookup table exists but `dropInterval` is only set at game start, never updated on level-up
 - High score persisted in `localStorage` key `subtetris_hi`
-- Support model state: `let supportModel = 'ground'` — values `'ground'` | `'cluster'`; toggled by sidebar buttons and mobile SUPP button; can be changed mid-game
+- Support model is fixed to `cluster`: `const supportModel = 'cluster'` — no UI controls
 - Single HTML file, no dependencies
 - Canvas scaled by CSS on mobile (buffer stays 300×600, CSS fills available height)
 - **Preview piece uses the same block size as the board** (pass `BLOCK` as `nb` to `drawPreview`); preview canvas is 120×90 to accommodate all piece shapes
