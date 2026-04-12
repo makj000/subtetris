@@ -280,7 +280,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.112</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.113</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level">1</div></div>
@@ -300,13 +300,12 @@
     </div>
     <div id="tc-side" class="tc-side">
       <button class="tc-side-btn active" id="tc-slo"  onclick="setSlowMotion(!slowMotion)">SLO<br>ON</button>
-      <button class="tc-side-btn"        id="tc-supp" onclick="cycleSupportModel()">SUPP<br>GND</button>
     </div>
   </div>
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 14px 10px 6px; text-align: center; border-bottom: none;">
       <div style="font-size:24px; font-weight:bold; letter-spacing:4px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:4px;">v1.5.112</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:4px;">v1.5.113</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -333,13 +332,6 @@
         <button class="nl-btn" id="nl-2" onclick="setNumLevel(2)">2</button>
         <button class="nl-btn" id="nl-3" onclick="setNumLevel(3)">3</button>
         <button class="nl-btn active" id="nl-4" onclick="setNumLevel(4)">4</button>
-      </div>
-    </div>
-    <div class="panel" style="flex: none; padding: 8px 10px; border-top: none;">
-      <h3>Support</h3>
-      <div class="nl-row">
-        <button class="nl-btn active" id="sup-gnd" onclick="setSupportModel('ground')">GND</button>
-        <button class="nl-btn" id="sup-clu" onclick="setSupportModel('cluster')">CLU</button>
       </div>
     </div>
     <div class="panel" style="flex: none; padding: 8px 10px; border-top: none;">
@@ -416,7 +408,7 @@ const mobCtx = mobNext.getContext('2d');
 let board, piece, nextPiece, score, level, lines, gameOver, paused, clearing, clearingRows, fallingAnim, subtractingAnim, dropTimer, dropInterval, softDrop;
 let gameGen = 0; // incremented on each startGame(); stale async chains check this to self-cancel
 let numLevel = 4;
-let supportModel = 'ground'; // 'ground' | 'cluster'
+const supportModel = 'cluster'; // fixed; controls hidden
 let slowMotion = true;
 let highScore = parseInt(localStorage.getItem('subtetris_hi') || '0', 10);
 let scorePopups = [];
@@ -518,17 +510,6 @@ function setNumLevel(n) {
   if (mb) mb.textContent = `MAX ${n}`;
 }
 
-function setSupportModel(mode) {
-  supportModel = mode;
-  document.getElementById('sup-gnd').classList.toggle('active', mode === 'ground');
-  document.getElementById('sup-clu').classList.toggle('active', mode === 'cluster');
-  const mb = document.getElementById('tc-supp');
-  if (mb) { mb.innerHTML = 'SUPP<br>' + (mode === 'ground' ? 'GND' : 'CLU'); mb.classList.toggle('active', mode === 'cluster'); }
-}
-
-function cycleSupportModel() {
-  setSupportModel(supportModel === 'ground' ? 'cluster' : 'ground');
-}
 
 function setSlowMotion(val) {
   slowMotion = val;
