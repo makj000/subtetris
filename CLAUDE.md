@@ -4,34 +4,59 @@ Build a single-file HTML5 canvas game called **Subtetris** — a Tetris variant 
 
 ---
 
-## Game Mechanics
+## Core Concept
 
-- Standard Tetris pieces (I, O, T, S, Z, J, L), each cell carrying a number
-- **MAX # setting (1–4):** controls the range of numbers assigned to block cells. MAX=1 means all cells are 1 (classic Tetris feel). MAX=2 means cells are randomly 1 or 2. Etc.
-- **Row clearing:** when a row is full, subtract the row's minimum value from every cell. Cells that reach 0 disappear.
-- **Cascade gravity:** after cells disappear, blocks above fall into the gaps. Re-evaluate rows and repeat until no full rows remain.
-- Slow-motion clearing animation: highlight row (500ms) → subtract & remove zeroed cells (500ms) → animate falling blocks (500ms per wave, 150ms pause between waves, ease-out curve).
-- Score: standard Tetris scoring multiplied by level. +1 per soft-drop row.
-- Level increases every 10 lines cleared. Drop speed is **constant** (does not change with level).
-- Ghost piece shown.
+Subtetris is a Tetris variant where blocks carry numbers and rows are cleared by **subtraction** instead of deletion.
 
 ---
 
-## Falling Rules
+## Pieces & Numbers
 
-1. **Active piece** — falls one row at a time on the drop timer; player can soft-drop with a swipe down.
+- Standard Tetris pieces (I, O, T, S, Z, J, L), each cell carrying a number
+- **MAX # setting (1–4):** controls the range of numbers on block cells
+  - MAX=1 → all cells are 1 (plays like classic Tetris visually; numbers hidden)
+  - MAX=2 → cells are randomly 1 or 2. Etc.
+- Ghost piece shown
 
-2. **Row clear** - process rows one at a time, scanning downward. For each full row found:
-2.1. **Zeroed blocks** - Determine the row's minimum value, subtract it from every cell. Cells that reach 0 vanish immediately, leaving empty cells.
-2.2. **Falling column** - Only the single block directly above each zeroed cell falls by one row into the gap. Higher blocks in the same column do not fall automatically — they are subject to rule 2.2.1. Blocks at the cleared row or below are never moved.
-2.2.1. **Neighboring co-falling blocks** — Decide ALL blocks that will fall in this wave (the single blocks from 2.2 plus all eligible neighbors) before moving anything. Behavior depends on the **Support Model** setting:
-- **`ground` mode (default):** A neighboring block falls only if it has no path to the ground through any series of connected blocks (i.e. it is "hanging"). BFS from the bottom row determines which blocks are grounded; all others are hanging and fall.
-- **`cluster` mode:** A neighboring block falls if it is adjacent (4-directional) to any block already in the falling set, unless it is self-grounded (its own column has an unbroken stack of blocks from that block's row all the way down to the floor — no gaps below it within the same column). Propagate using column-first DFS: fully exhaust all eligible blocks upward within the current column before expanding horizontally to adjacent columns. Keep expanding until no new adjacent non-self-grounded blocks are found.
-2.3. **Move** - All decided blocks fall by exactly 1 row simultaneously.
-2.4. **Re-check same row** - After the fall, check if the same row is full again (blocks that fell into it may have filled it). If full, repeat from 2.1 for this row (chain depth increases, awarding bonus score). If not full, advance to the row below and check it. Continue scanning downward until no more full rows are found.
-2.5. **Final settle** - After no more full rows remain, run one BFS-based hanging-block pass to drop any residual floating blocks (ground mode safety net).
+---
 
-3. **Multi-row clear bonus** — when multiple rows get full, calculate one row at a time from the top, and there should be extra score awarded.
+## Row Clearing
+
+When a row is full:
+1. Find the row's minimum value; subtract it from every cell
+2. Cells that reach 0 vanish, leaving empty cells
+3. Trigger cascade (see below)
+
+---
+
+## Cascade Gravity
+
+After cells vanish, blocks above fall to fill gaps. The process repeats until no full rows remain.
+
+**Per-wave fall sequence:**
+
+1. **Seed fallers** — the single block directly above each vanished cell falls one row. Blocks at or below the cleared row never move.
+2. **Expand to neighbors** — determine all co-falling blocks before moving anything. Behavior depends on the **Support Model**:
+   - **`ground` (default):** BFS from the bottom row marks all reachable blocks as grounded. Any block with no path to ground is hanging and falls.
+   - **`cluster`:** A block falls if adjacent (4-directional) to any block already falling, unless it is self-grounded (unbroken stack in its own column from its row to the floor). Propagate via column-first DFS — exhaust upward within the column before expanding sideways.
+3. **Move** — all decided blocks fall exactly 1 row simultaneously
+4. **Re-check** — if the same row is now full again, repeat from step 1 (chain; bonus score). Otherwise advance downward and continue scanning.
+5. **Final settle** — after no more full rows remain, one BFS pass drops any residual floating blocks (ground-mode safety net)
+
+---
+
+## Scoring & Progression
+
+- Score: standard Tetris scoring × level. +1 per soft-drop row
+- Multi-row chains: rows processed top-to-bottom; each additional chain depth awards bonus score
+- Level increases every 10 lines cleared
+- Drop speed is **constant** (NES level-1 pace, ~800ms) — does not change with level
+
+---
+
+## Clearing Animation
+
+Highlight row (500ms) → subtract & remove zeroed cells (500ms) → animate falling blocks (500ms per wave, 150ms pause between waves, ease-out curve)
 
 ---
 
