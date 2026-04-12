@@ -85,14 +85,15 @@ Timing scales with **animation speed** setting (`animSpeed`):
 ## Desktop Layout
 
 Sidebar (130px wide, same height as board):
-- Title "SUBTETRIS" + version below in small text
-- Score (right-aligned)
-- Level + Lines (side by side)
-- Next piece preview canvas (120×90) — blocks drawn at the same size as board blocks (BLOCK px)
-- MAX # selector: 4 buttons [1][2][3][4] — active one highlighted burnt orange
+- Title "SUBTETRIS" (font-size 16px, letter-spacing 2px) + version below
+- Score — DSEG7 20px, dual-layer display (record in navy, current in orange); expands beyond 5 digits dynamically
+- Level + Lines (side by side) — same dual-layer digit display; Level min 2 digits, Lines min 3 digits
+- Next piece preview canvas (120×90, `flex: none`) — blocks drawn at BLOCK px size
+- **MAX #** — single cycling button, always active (burnt orange), label "MAX n", cycles 4→3→2→1→4
 - **Anim speed** selector: 3 buttons `[SLO][MED][FST]` — active one highlighted burnt orange
 - NEW GAME button (rounded bottom corners, burnt orange style)
-- Controls cheatsheet
+- Controls cheatsheet (font-size 10px, line-height 1.6, `flex: 2`)
+- 🔊/🔇 sound toggle icon button at bottom
 
 Canvas: 300×600 (10 cols × 20 rows × 30px blocks), border `#1e3a5f`.
 
@@ -100,10 +101,10 @@ Canvas: 300×600 (10 cols × 20 rows × 30px blocks), border `#1e3a5f`.
 
 ## Mobile Layout (`@media (max-width: 600px)`)
 
-**Top bar (60px tall, fixed):**
-- Left: "SUBTETRIS" + version stacked below in small text
-- Center (flex: 1, centered): Score | Lvl | Lines stats
-- Right: NEXT piece preview canvas — fills almost full bar height (80×80 buffer, CSS sized to fill bar via `align-self: stretch; padding: 2px 0`)
+**Top bar (88px tall, fixed):**
+- Left: "SUBTETRIS" + version stacked, then Score | Lvl | Lines stats row below (dual-layer digit display, same as desktop)
+- Center-right: 🔊/🔇 sound toggle button (36×36px, `#1a3a6a`, id `mob-snd`)
+- Right: NEXT piece preview canvas (96×72px CSS, 120×90 buffer)
 
 **Game board:**
 - Fills all remaining height between top bar and controls
@@ -116,20 +117,21 @@ Canvas: 300×600 (10 cols × 20 rows × 30px blocks), border `#1e3a5f`.
 
 **Bottom touch controls — 2×7 grid:**
 ```
-Row 1: [←][→][MAX][PAUSE][NEW][↺][▼]
-Row 2: [  ][  ][  ][ 🔊 ][SUPP][  ][  ]
+Row 1: [←][→][PAUSE][MAX][NEW][ANIM][↺]
+Row 2: [  ][  ][  ][    ][   ][    ][▼]
 ```
 **Layout rules:**
 - `#touch-ctrl`: `display: grid; grid-template-columns: repeat(7, 50px); grid-template-rows: repeat(2, 50px); gap: 4px; justify-content: center`
 - All buttons are **50×50px squares** — positioned via `grid-column`/`grid-row` inline styles
-- 🔊 sits at `grid-column: 4; grid-row: 2` (centered below PAUSE)
-- MAX cycles downward: 4→3→2→1→4
+- ANIM (`tc-slo`) at `grid-column: 6; grid-row: 1` — cycles SLO→MED→FST; active (orange) unless FST; label "ANIM\nXXX"
+- Sound toggle moved to top bar (`mob-snd`)
+- MAX cycles 4→3→2→1→4, label "MAX n"; default MAX 4
 
 **Button styles:**
 - `.tc-btn` (base): 50×50px, font-size 22px, **light navy blue** `#1a3a6a`, border `#2a5498`
-- `.tc-action`: **burnt orange** `#7a3510`, border `#c87941`, text `#ffd0a0` — ← → ↺ ▼
-- `.tc-txt`: `font-size: 9px; letter-spacing: 0.5px` — MAX, PAUSE, NEW GAME
-- 🔊 / 🔇 toggles sound; MAX cycles 1→2→3→4→1, label "MAX n"; default MAX 4
+- `.tc-btn.active`: burnt orange `#7a3510`, border `#c87941`, text `#ffd0a0`
+- `.tc-action`: burnt orange — ← → ↺ ▼
+- `.tc-txt`: `font-size: 9px; letter-spacing: 0.5px` — MAX, PAUSE, NEW, ANIM
 
 **Canvas gesture controls (on board itself):**
 - Tap (< ~18px movement): rotate
@@ -188,7 +190,8 @@ No x-delta needed — `idealX = piece.x` is correct for all their rotation state
 - Single HTML file; DSEG7-Classic font loaded from jsDelivr CDN for score display
 - Score display: two overlaid divs — record (navy `#1e3a5c`) behind, current score (burnt orange `#d4863c`) on top. Current score color is `#071020` (invisible) when score = 0, switching to burnt orange once scoring begins
 - Drop speed is constant at NES level-1 pace (~800ms); `nesInterval()` lookup table exists but `dropInterval` is only set at game start, never updated on level-up
-- High score persisted in `localStorage` key `subtetris_hi`
+- Records persisted in `localStorage`: `subtetris_hi` (score), `subtetris_hi_lvl` (level), `subtetris_hi_lines` (lines); all updated in `endGame()`
+- `renderScoreDigits(elId, cur, rec, minPad=5)` — dual-layer digit display (record in navy `#1e3a5c`, current in orange `#d4863c`); digit count = max(cur digits, rec digits, minPad); used for score (minPad=5), level (minPad=2), lines (minPad=3)
 - Support model is fixed to `cluster`: `const supportModel = 'cluster'` — no UI controls
 - Single HTML file, no dependencies
 - Canvas scaled by CSS on mobile (buffer stays 300×600, CSS fills available height)

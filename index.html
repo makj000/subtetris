@@ -57,7 +57,7 @@
     .panel {
       background: #0d1f3c;
       border: 1px solid #1e3a5f;
-      padding: 12px 14px;
+      padding: 6px 10px;
       flex: 1;
       min-height: 0;
       overflow: hidden;
@@ -72,14 +72,14 @@
       border-top: none;
     }
     .panel h3 {
-      font-size: 10px;
+      font-size: 9px;
       letter-spacing: 2px;
       color: #888;
-      margin: 0 0 8px 0;
+      margin: 0 0 3px 0;
       text-transform: uppercase;
     }
     .panel .value {
-      font-size: 28px;
+      font-size: 20px;
       font-family: 'DSEG7-Classic', 'Courier New', monospace;
       font-weight: bold;
       color: #d4863c;
@@ -202,6 +202,13 @@
       .mh-val { font-size: 16px; font-weight: bold; font-family: 'DSEG7-Classic', monospace; color: #d4863c; font-variant-numeric: tabular-nums; letter-spacing: 2px; text-shadow: 0 0 10px rgba(200,120,40,0.5); }
       #mob-next-wrap { display: flex; flex-shrink: 0; }
       #mob-next { display: block; border: none; height: 72px; width: 96px; }
+      #mob-snd {
+        background: #1a3a6a; border: 1px solid #2a5498; color: #ccd;
+        font-size: 20px; width: 36px; height: 36px; border-radius: 6px;
+        cursor: pointer; flex-shrink: 0; align-self: center;
+        touch-action: manipulation;
+      }
+      #mob-snd:active { background: #254d8a; }
 
       /* Gesture hints bar — hidden */
       #mob-hints { display: none; }
@@ -272,6 +279,7 @@
       }
       .tc-side-btn:active { background: #254d8a; }
       .tc-side-btn.active { background: #7a3510; border-color: #c87941; color: #ffd0a0; }
+      .tc-btn.active { background: #7a3510; border-color: #c87941; color: #ffd0a0; }
     }
   </style>
 </head>
@@ -280,13 +288,14 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.115</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.117</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
-      <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level">1</div></div>
-      <div class="mh-stat"><div class="mh-label">Lines</div><div class="mh-val" id="m-lines">0</div></div>
+      <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
+      <div class="mh-stat"><div class="mh-label">Lines</div><div class="mh-val" id="m-lines"></div></div>
     </div>
   </div>
+  <button id="mob-snd" onclick="toggleSound()">🔊</button>
   <div id="mob-next-wrap"><canvas id="mob-next" width="120" height="90"></canvas></div>
 </div>
 <div id="game-container">
@@ -298,14 +307,11 @@
         <p id="msg-sub">Enter or Space to restart</p>
       </div>
     </div>
-    <div id="tc-side" class="tc-side">
-      <button class="tc-side-btn active" id="tc-slo"  onclick="cycleAnimSpeed()">ANIM<br>MED</button>
-    </div>
   </div>
   <div id="sidebar">
-    <div class="panel" style="flex: none; padding: 14px 10px 6px; text-align: center; border-bottom: none;">
-      <div style="font-size:24px; font-weight:bold; letter-spacing:4px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:4px;">v1.5.115</div>
+    <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
+      <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.117</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -314,27 +320,22 @@
     <div class="stats-row">
       <div class="panel">
         <h3>Lvl</h3>
-        <div class="value" style="font-size:20px;" id="level">1</div>
+        <div class="value" style="font-size:16px;" id="level"></div>
       </div>
       <div class="panel">
         <h3>Lines</h3>
-        <div class="value" style="font-size:20px;" id="lines">0</div>
+        <div class="value" style="font-size:16px;" id="lines"></div>
       </div>
     </div>
-    <div class="panel" id="next-panel">
+    <div class="panel" id="next-panel" style="flex: none; padding: 6px 10px;">
       <h3>Next</h3>
       <canvas id="next-canvas" width="120" height="90"></canvas>
     </div>
-    <div class="panel" style="flex: none; padding: 8px 10px; border-top: none;">
+    <div class="panel" style="flex: none; padding: 6px 10px; border-top: none;">
       <h3>Max #</h3>
-      <div class="nl-row">
-        <button class="nl-btn" id="nl-1" onclick="setNumLevel(1)">1</button>
-        <button class="nl-btn" id="nl-2" onclick="setNumLevel(2)">2</button>
-        <button class="nl-btn" id="nl-3" onclick="setNumLevel(3)">3</button>
-        <button class="nl-btn active" id="nl-4" onclick="setNumLevel(4)">4</button>
-      </div>
+      <button class="nl-btn active" id="nl-max" onclick="cycleNumLevel()" style="width:100%; margin-top:3px;">MAX 4</button>
     </div>
-    <div class="panel" style="flex: none; padding: 8px 10px; border-top: none;">
+    <div class="panel" style="flex: none; padding: 6px 10px; border-top: none;">
       <h3>Anim</h3>
       <div class="nl-row">
         <button class="nl-btn"        id="slo-on"  onclick="setAnimSpeed('slow')">SLO</button>
@@ -343,16 +344,15 @@
       </div>
     </div>
     <button onclick="startGame()" style="background:#7a3510;border:2px solid #c87941;border-top:none;border-radius:0 0 6px 6px;color:#ffd0a0;padding:11px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:3px;width:100%;font-weight:bold;transition:background 0.15s;" onmouseover="this.style.background='#a04818'" onmouseout="this.style.background='#7a3510'">NEW GAME</button>
-    <div class="panel" style="font-size:11px; color:#aaa; line-height:1.8; justify-content: flex-start;">
+    <div class="panel" style="flex: 2; font-size:10px; color:#aaa; line-height:1.6; justify-content: flex-start;">
       <h3>Controls</h3>
       ← → move<br>
       ↓ soft drop<br>
       ↑ rotate<br>
       spc/P pause<br>
-      N new game<br>
-      S sound
+      N new game
     </div>
-    <button id="snd-btn" onclick="toggleSound()" style="background:#071020;border:1px solid #1e3a5f;border-top:none;color:#778;padding:7px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;letter-spacing:2px;width:100%;transition:background 0.1s;">SND: ON</button>
+    <button id="snd-btn" onclick="toggleSound()" style="background:#071020;border:1px solid #1e3a5f;border-top:none;color:#aaa;padding:5px;font-size:18px;cursor:pointer;width:100%;transition:background 0.1s;">🔊</button>
   </div>
 </div>
 
@@ -361,10 +361,10 @@
 <div id="touch-ctrl">
   <button class="tc-btn tc-action" id="tc-left"  style="grid-column:1;grid-row:1">←</button>
   <button class="tc-btn tc-action" id="tc-right" style="grid-column:2;grid-row:1">→</button>
-  <button class="tc-btn tc-txt"   id="tc-max"   style="grid-column:3;grid-row:1">MAX 4</button>
-  <button class="tc-btn tc-txt"   id="tc-pause" style="grid-column:4;grid-row:1">PAUSE</button>
+  <button class="tc-btn tc-txt"   id="tc-pause" style="grid-column:3;grid-row:1">PAUSE</button>
+  <button class="tc-btn tc-txt"   id="tc-max"   style="grid-column:4;grid-row:1">MAX 4</button>
   <button class="tc-btn tc-txt"   id="tc-new"   style="grid-column:5;grid-row:1">NEW</button>
-  <button class="tc-btn"          id="tc-snd"   style="grid-column:6;grid-row:1">🔊</button>
+  <button class="tc-btn tc-txt active" id="tc-slo" style="grid-column:6;grid-row:1" onclick="cycleAnimSpeed()">ANIM<br>MED</button>
   <button class="tc-btn tc-action" id="tc-rot"  style="grid-column:7;grid-row:1">↺</button>
   <button class="tc-btn tc-blank"               style="grid-column:1;grid-row:2"></button>
   <button class="tc-btn tc-blank"               style="grid-column:2;grid-row:2"></button>
@@ -411,7 +411,9 @@ let gameGen = 0; // incremented on each startGame(); stale async chains check th
 let numLevel = 4;
 const supportModel = 'cluster'; // fixed; controls hidden
 let animSpeed = 'med'; // 'slow' | 'med' | 'fast'
-let highScore = parseInt(localStorage.getItem('subtetris_hi') || '0', 10);
+let highScore = parseInt(localStorage.getItem('subtetris_hi')       || '0', 10);
+let highLevel = parseInt(localStorage.getItem('subtetris_hi_lvl')   || '1', 10);
+let highLines = parseInt(localStorage.getItem('subtetris_hi_lines') || '0', 10);
 let scorePopups = [];
 const CLEAR_MS = 500;
 const FALL_MS = 500;
@@ -471,10 +473,11 @@ function sfx(name) {
 
 function toggleSound() {
   soundOn = !soundOn;
-  const mob = document.getElementById('tc-snd');
-  const desk = document.getElementById('snd-btn');
-  if (mob) mob.textContent = soundOn ? '🔊' : '🔇';
-  if (desk) desk.textContent = soundOn ? 'SND: ON' : 'SND: OFF';
+  const icon = soundOn ? '🔊' : '🔇';
+  ['tc-snd','snd-btn','mob-snd'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = icon;
+  });
   if (soundOn) sfx('rotate'); // audible confirmation
 }
 
@@ -504,12 +507,13 @@ function numTextColor(num) {
 
 function setNumLevel(n) {
   numLevel = n;
-  for (let i = 1; i <= 4; i++) {
-    const d = document.getElementById('nl-' + i);
-    if (d) d.classList.toggle('active', i === n);
-  }
+  const db = document.getElementById('nl-max');
+  if (db) db.textContent = `MAX ${n}`;
   const mb = document.getElementById('tc-max');
   if (mb) mb.textContent = `MAX ${n}`;
+}
+function cycleNumLevel() {
+  setNumLevel(numLevel === 1 ? 4 : numLevel - 1);
 }
 
 
@@ -807,21 +811,20 @@ function hardDrop() {
   lock();
 }
 
-function renderScoreDigits(elId, cur, rec) {
+function renderScoreDigits(elId, cur, rec, minPad = 5) {
   const el = document.getElementById(elId);
   if (!el) return;
-  const cs = String(cur).padStart(5, '0');
-  const rs = String(rec).padStart(5, '0');
+  const digits = Math.max(String(cur).length, String(rec).length, minPad);
+  const cs = String(cur).padStart(digits, '0');
+  const rs = String(rec).padStart(digits, '0');
   // first digit position where current score is non-zero
-  let firstActive = 5;
-  for (let i = 0; i < 5; i++) { if (cs[i] !== '0') { firstActive = i; break; } }
+  let firstActive = digits;
+  for (let i = 0; i < digits; i++) { if (cs[i] !== '0') { firstActive = i; break; } }
   let html = '';
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < digits; i++) {
     if (i < firstActive) {
-      // current hasn't reached here — show record digit in navy
       html += `<span style="color:#1e3a5c">${rs[i]}</span>`;
     } else {
-      // current score's own digit in burnt orange
       html += `<span style="color:#d4863c">${cs[i]}</span>`;
     }
   }
@@ -831,10 +834,10 @@ function renderScoreDigits(elId, cur, rec) {
 function updateUI() {
   renderScoreDigits('score',   score, highScore);
   renderScoreDigits('m-score', score, highScore);
-  document.getElementById('level').textContent = level;
-  document.getElementById('lines').textContent = lines;
-  document.getElementById('m-level').textContent = level;
-  document.getElementById('m-lines').textContent = lines;
+  renderScoreDigits('level',   level, highLevel, 2);
+  renderScoreDigits('lines',   lines, highLines, 3);
+  renderScoreDigits('m-level', level, highLevel, 2);
+  renderScoreDigits('m-lines', lines, highLines, 3);
 }
 
 // Main block draw (board canvas)
@@ -1027,6 +1030,8 @@ function updateButtons() {
 function endGame() {
   sfx('gameover');
   gameOver = true;
+  if (level > highLevel) { highLevel = level; localStorage.setItem('subtetris_hi_lvl',   highLevel); }
+  if (lines > highLines) { highLines = lines; localStorage.setItem('subtetris_hi_lines', highLines); }
   const isNewRecord = score > 0 && score > highScore;
   if (isNewRecord) {
     highScore = score;
