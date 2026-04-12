@@ -166,15 +166,15 @@ Fix: apply an x-delta to `idealX` based on the incoming rotation state:
 | 3 | +1 |
 | 0 (from 3) | −1 |
 
-Implemented as a lookup table `{ S: [0, 0, 0, +1], Z: [0, 0, 0, +1] }` keyed by `newRot = (piece.rot + 1) % 4`, with a compensating −1 baked into the state-0 entry when coming from state 3. A full 360° cycle returns to the exact original x — no drift.
+Implemented as `ROT_X_DELTA = { S: [-1,0,0,+1], Z: [-1,0,0,+1], L: [-1,0,0,+1], J: [-1,0,0,+1] }` keyed by `newRot = (piece.rot + 1) % 4`. A full 360° cycle returns to the exact original x — no drift.
 
 ### I-piece — vertical column consistency
 
 The existing special-case logic in `rotatePiece()` (checking `m[1][0]`, `m[2][0]`, `m[0][2]`) already produces correct column stability: both vertical states (rot 1 and rot 3) land on the same board column. **Do not change this logic.**
 
-### Other pieces (T, J, L, O)
+### Other pieces (T, O)
 
-No x-delta needed — `idealX = piece.x` is correct for all their rotation states.
+No x-delta needed — `idealX = piece.x` is correct for all their rotation states. T has the same mathematical asymmetry but its four states are all visually distinct so no correction is applied.
 
 ---
 
@@ -192,7 +192,8 @@ No x-delta needed — `idealX = piece.x` is correct for all their rotation state
 - `requestAnimationFrame` game loop
 - Async clearing chain via `setTimeout` (no blocking)
 - `cascadeFall()` moves only one row at a time per wave, repeats until settled
-- Bump patch version (in HTML title, sidebar, and mobile header) on every code change
+- **`gameGen` counter** — incremented by `startGame()`; every `setTimeout` callback in `lock()`/`step()`/`applyGravityUntilStable()` captures `myGen = gameGen` at call time and returns early if `gameGen !== myGen`. Prevents stale callbacks from overwriting the new game's state or calling `endGame()` after NEW is pressed mid-clearing-chain
+- **Always bump the patch version** (in HTML title, sidebar, and mobile header) on every turn that makes any code change to `index.html` — do this as the final step of that turn
 - Serve via `python3 -m http.server 3456`
 
 ---

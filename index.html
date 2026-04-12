@@ -280,7 +280,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.111</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.112</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level">1</div></div>
@@ -306,7 +306,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 14px 10px 6px; text-align: center; border-bottom: none;">
       <div style="font-size:24px; font-weight:bold; letter-spacing:4px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:4px;">v1.5.111</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:4px;">v1.5.112</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -560,20 +560,29 @@ function rotate(matrix) {
 }
 
 // Rotate piece, keeping visual anchor stable
-function rotatePiece() {
-  const isIpiece = piece.type === 'I';
+// For 3×3 pieces: state 1 has content in matrix cols 1–2, state 3 in cols 0–1.
+// S/Z/J/L apply +1 when entering state 3 and −1 when entering state 0 to keep
+// both vertical states on the same board columns (no drift over full cycles).
+const ROT_X_DELTA = {
+  S: [-1, 0, 0, +1],
+  Z: [-1, 0, 0, +1],
+  L: [-1, 0, 0, +1],
+  J: [-1, 0, 0, +1],
+};
 
+function rotatePiece() {
   const rotated = rotate(piece.matrix);
+  const newRot = (piece.rot + 1) % 4;
 
   let idealX;
-  if (isIpiece) {
+  if (piece.type === 'I') {
     const m = piece.matrix;
     if      (m[1][0])  idealX = piece.x - 1;
     else if (m[2][0])  idealX = piece.x;
     else if (m[0][2])  idealX = piece.x + 1;
     else               idealX = piece.x;
   } else {
-    idealX = piece.x;
+    idealX = piece.x + (ROT_X_DELTA[piece.type]?.[newRot] ?? 0);
   }
 
   for (const kick of [0, -1, 1, -2, 2]) {
@@ -581,7 +590,7 @@ function rotatePiece() {
     if (!collides(rotated, tx, piece.y)) {
       piece.matrix = rotated;
       piece.x = tx;
-      piece.rot = (piece.rot + 1) % 4;
+      piece.rot = newRot;
       return;
     }
   }
