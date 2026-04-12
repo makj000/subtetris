@@ -148,6 +148,36 @@ Wall kicks: try offsets `[0, -1, 1, -2, 2]` on rotate.
 
 ---
 
+## Rotation Stability Rules
+
+All rotations are 90° clockwise. `rotatePiece()` computes `idealX` then tries wall-kick offsets `[0, -1, 1, -2, 2]`.
+
+### S and Z pieces — vertical state consistency
+
+Both vertical states (rot 1 and rot 3) must occupy the **same pair of board columns**. Without correction, the 90° CW rotation formula places content in the right half of the 3×3 bounding box for state 1 and the left half for state 3, causing a 1-column wobble.
+
+Fix: apply an x-delta to `idealX` based on the incoming rotation state:
+
+| Entering state | x-delta |
+|---|---|
+| 0 | 0 |
+| 1 | 0 |
+| 2 | 0 |
+| 3 | +1 |
+| 0 (from 3) | −1 |
+
+Implemented as a lookup table `{ S: [0, 0, 0, +1], Z: [0, 0, 0, +1] }` keyed by `newRot = (piece.rot + 1) % 4`, with a compensating −1 baked into the state-0 entry when coming from state 3. A full 360° cycle returns to the exact original x — no drift.
+
+### I-piece — vertical column consistency
+
+The existing special-case logic in `rotatePiece()` (checking `m[1][0]`, `m[2][0]`, `m[0][2]`) already produces correct column stability: both vertical states (rot 1 and rot 3) land on the same board column. **Do not change this logic.**
+
+### Other pieces (T, J, L, O)
+
+No x-delta needed — `idealX = piece.x` is correct for all their rotation states.
+
+---
+
 ## Tech Notes
 
 - Single HTML file; DSEG7-Classic font loaded from jsDelivr CDN for score display
