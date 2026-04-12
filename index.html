@@ -280,7 +280,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.113</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.115</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level">1</div></div>
@@ -299,13 +299,13 @@
       </div>
     </div>
     <div id="tc-side" class="tc-side">
-      <button class="tc-side-btn active" id="tc-slo"  onclick="setSlowMotion(!slowMotion)">SLO<br>ON</button>
+      <button class="tc-side-btn active" id="tc-slo"  onclick="cycleAnimSpeed()">ANIM<br>MED</button>
     </div>
   </div>
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 14px 10px 6px; text-align: center; border-bottom: none;">
       <div style="font-size:24px; font-weight:bold; letter-spacing:4px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:4px;">v1.5.113</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:4px;">v1.5.115</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -337,8 +337,9 @@
     <div class="panel" style="flex: none; padding: 8px 10px; border-top: none;">
       <h3>Anim</h3>
       <div class="nl-row">
-        <button class="nl-btn active" id="slo-on"  onclick="setSlowMotion(true)">SLO</button>
-        <button class="nl-btn"        id="slo-off" onclick="setSlowMotion(false)">FAST</button>
+        <button class="nl-btn"        id="slo-on"  onclick="setAnimSpeed('slow')">SLO</button>
+        <button class="nl-btn active" id="slo-med" onclick="setAnimSpeed('med')">MED</button>
+        <button class="nl-btn"        id="slo-off" onclick="setAnimSpeed('fast')">FST</button>
       </div>
     </div>
     <button onclick="startGame()" style="background:#7a3510;border:2px solid #c87941;border-top:none;border-radius:0 0 6px 6px;color:#ffd0a0;padding:11px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:3px;width:100%;font-weight:bold;transition:background 0.15s;" onmouseover="this.style.background='#a04818'" onmouseout="this.style.background='#7a3510'">NEW GAME</button>
@@ -409,12 +410,13 @@ let board, piece, nextPiece, score, level, lines, gameOver, paused, clearing, cl
 let gameGen = 0; // incremented on each startGame(); stale async chains check this to self-cancel
 let numLevel = 4;
 const supportModel = 'cluster'; // fixed; controls hidden
-let slowMotion = true;
+let animSpeed = 'med'; // 'slow' | 'med' | 'fast'
 let highScore = parseInt(localStorage.getItem('subtetris_hi') || '0', 10);
 let scorePopups = [];
 const CLEAR_MS = 500;
 const FALL_MS = 500;
-function animDelay(ms) { return slowMotion ? ms : 0; }
+function animDelay(ms)    { return animSpeed === 'slow' ? ms : animSpeed === 'med' ? Math.round(ms / 2) : 0; }
+function animDuration(ms) { return animSpeed === 'slow' ? ms : animSpeed === 'med' ? Math.round(ms / 2) : 1; }
 const POPUP_MS = 1200;
 
 // ── Sound engine ──
@@ -511,12 +513,18 @@ function setNumLevel(n) {
 }
 
 
-function setSlowMotion(val) {
-  slowMotion = val;
-  document.getElementById('slo-on').classList.toggle('active', val);
-  document.getElementById('slo-off').classList.toggle('active', !val);
+function setAnimSpeed(speed) {
+  animSpeed = speed;
+  ['slo-on','slo-med','slo-off'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === {'slow':'slo-on','med':'slo-med','fast':'slo-off'}[speed]);
+  });
   const mb = document.getElementById('tc-slo');
-  if (mb) { mb.innerHTML = 'SLO<br>' + (val ? 'ON' : 'OFF'); mb.classList.toggle('active', val); }
+  const labels = { slow: 'SLO', med: 'MED', fast: 'FST' };
+  if (mb) { mb.innerHTML = 'ANIM<br>' + labels[speed]; mb.classList.toggle('active', speed !== 'fast'); }
+}
+function cycleAnimSpeed() {
+  setAnimSpeed(animSpeed === 'slow' ? 'med' : animSpeed === 'med' ? 'fast' : 'slow');
 }
 
 function randomPiece() {
@@ -926,7 +934,7 @@ function draw() {
 
   // Cross-fade animation: old number fades out, new number fades in
   if (subtractingAnim) {
-    const t = Math.min((performance.now() - subtractingAnim.startTime) / CLEAR_MS, 1);
+    const t = Math.min((performance.now() - subtractingAnim.startTime) / animDuration(CLEAR_MS), 1);
     for (const sb of subtractingAnim.blocks) {
       ctx.save();
       ctx.globalAlpha = 1 - t;
@@ -947,7 +955,7 @@ function draw() {
   }
 
   if (fallingAnim) {
-    const t = Math.min((performance.now() - fallingAnim.startTime) / FALL_MS, 1);
+    const t = Math.min((performance.now() - fallingAnim.startTime) / animDuration(FALL_MS), 1);
     const ease = t * (2 - t);
     for (const fb of fallingAnim.blocks) {
       const y = fb.fromRow + (fb.toRow - fb.fromRow) * ease;

@@ -55,7 +55,14 @@ After cells vanish, blocks above fall to fill gaps. The process repeats until no
 
 ## Clearing Animation
 
-Highlight row (500ms) → subtract & remove zeroed cells (500ms) → animate falling blocks (500ms per wave, 150ms pause between waves, ease-out curve)
+Highlight row → subtract & remove zeroed cells → animate falling blocks (ease-out curve, 150ms pause between waves).
+
+Timing scales with **animation speed** setting (`animSpeed`):
+- **SLO:** 500ms per phase
+- **MED:** 250ms per phase (default)
+- **FST:** instant (0ms delays)
+
+`animDelay(ms)` controls `setTimeout` durations; `animDuration(ms)` controls render interpolation denominators — both must use the same scale factor so animations complete fully before the next phase fires.
 
 ---
 
@@ -83,6 +90,7 @@ Sidebar (130px wide, same height as board):
 - Level + Lines (side by side)
 - Next piece preview canvas (120×90) — blocks drawn at the same size as board blocks (BLOCK px)
 - MAX # selector: 4 buttons [1][2][3][4] — active one highlighted burnt orange
+- **Anim speed** selector: 3 buttons `[SLO][MED][FST]` — active one highlighted burnt orange
 - NEW GAME button (rounded bottom corners, burnt orange style)
 - Controls cheatsheet
 
