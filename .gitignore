@@ -11,11 +11,19 @@ ios/App/Pods
 ios/App/output
 ios/App/App/public
 
+# Xcode user-specific data
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+
 # Cordova plugins for Capacitor
 ios/capacitor-cordova-ios-plugins
 
 # Generated Capacitor config files
 ios/App/App/capacitor.config.json
+
+# npm
+node_modules
 
 # Build artifacts (populated by update_mobile_app.sh / cap sync)
 www/index.html

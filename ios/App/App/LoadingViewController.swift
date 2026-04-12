@@ -16,8 +16,7 @@ class LoadingViewController: CAPBridgeViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Paint the navy background immediately so the WKWebView's black default
-        // never shows through before the overlay or HTML is ready.
+        // Navy background so the WebView is never black before content loads
         view.backgroundColor = UIColor(red: 10/255, green: 22/255, blue: 40/255, alpha: 1)
     }
 
@@ -27,8 +26,7 @@ class LoadingViewController: CAPBridgeViewController {
         overlayShown = true
         addLoadingOverlay()
 
-        // Start a guaranteed fallback timer immediately — this fires regardless of
-        // whether KVO attaches successfully, so the overlay always eventually dismisses.
+        // Guaranteed fallback — dismisses overlay even if KVO never fires
         fallbackTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { [weak self] _ in
             self?.completeAndDismiss()
         }
@@ -44,11 +42,9 @@ class LoadingViewController: CAPBridgeViewController {
     // MARK: - KVO
 
     private func attachKVO(attempt: Int = 0) {
-        // Prefer Capacitor's own bridge.webView property; fall back to subview traversal.
         let wv = bridge?.webView ?? findWebView(in: view)
 
         guard let wv else {
-            // WebView not ready yet — retry up to ~3 seconds (30 × 100ms)
             guard attempt < 30 else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 self?.attachKVO(attempt: attempt + 1)
@@ -56,7 +52,7 @@ class LoadingViewController: CAPBridgeViewController {
             return
         }
 
-        // Ensure the WebView itself is never black while content loads
+        // Set navy background on the WebView itself
         wv.isOpaque = false
         wv.backgroundColor = UIColor(red: 10/255, green: 22/255, blue: 40/255, alpha: 1)
         wv.scrollView.backgroundColor = UIColor(red: 10/255, green: 22/255, blue: 40/255, alpha: 1)
@@ -64,8 +60,7 @@ class LoadingViewController: CAPBridgeViewController {
         kvoToken = wv.observe(\.estimatedProgress, options: [.new]) { [weak self] webView, _ in
             DispatchQueue.main.async {
                 let p = webView.estimatedProgress
-                let mapped = min(p * 0.90, 0.90)
-                self?.setProgress(mapped, animated: true)
+                self?.setProgress(min(p * 0.90, 0.90), animated: true)
                 if p >= 0.99 {
                     self?.kvoToken?.invalidate()
                     self?.kvoToken = nil
@@ -82,14 +77,12 @@ class LoadingViewController: CAPBridgeViewController {
         overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         overlay.backgroundColor = UIColor(red: 10/255, green: 22/255, blue: 40/255, alpha: 1)
 
-        // Splash image — check Assets.xcassets for the exact asset name
         let splash = UIImageView(image: UIImage(named: "Splash"))
         splash.contentMode = .scaleAspectFill
         splash.frame = overlay.bounds
         splash.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         overlay.addSubview(splash)
 
-        // Custom progress bar: track + fill
         let trackH: CGFloat = 8
         let track = UIView()
         track.backgroundColor = UIColor(red: 30/255, green: 58/255, blue: 95/255, alpha: 0.8)
