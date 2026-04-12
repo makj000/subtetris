@@ -414,6 +414,7 @@ const mobNext = document.getElementById('mob-next');
 const mobCtx = mobNext.getContext('2d');
 
 let board, piece, nextPiece, score, level, lines, gameOver, paused, clearing, clearingRows, fallingAnim, subtractingAnim, dropTimer, dropInterval, softDrop;
+let gameGen = 0; // incremented on each startGame(); stale async chains check this to self-cancel
 let numLevel = 4;
 let supportModel = 'ground'; // 'ground' | 'cluster'
 let slowMotion = true;
@@ -626,7 +627,8 @@ function findHangingBlocks() {
 }
 
 // Drop all hanging blocks by 1 row, animate, repeat until none remain
-function applyGravityUntilStable(onDone) {
+function applyGravityUntilStable(onDone, gen) {
+  if (gen !== undefined && gameGen !== gen) return;
   const hanging = findHangingBlocks();
   if (!hanging.length) { onDone(); return; }
   const fallers = [];
@@ -643,9 +645,10 @@ function applyGravityUntilStable(onDone) {
   if (!fallers.length) { onDone(); return; }
   fallingAnim = { blocks: fallers, startTime: performance.now() };
   setTimeout(() => {
+    if (gen !== undefined && gameGen !== gen) return;
     for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
     fallingAnim = null;
-    setTimeout(() => applyGravityUntilStable(onDone), animDelay(150));
+    setTimeout(() => applyGravityUntilStable(onDone, gen), animDelay(150));
   }, animDelay(FALL_MS));
 }
 
@@ -727,8 +730,10 @@ function lock() {
   piece = null;
   let cleared = 0;
   let earnedScore = 0;
+  const myGen = gameGen; // capture: any startGame() call will bump gameGen, cancelling this chain
 
   function step(startRow = 0, chainDepth = 0) {
+    if (gameGen !== myGen) return; // new game started — abandon this chain
     // Find first full row at or below startRow
     let fullRow = -1;
     for (let r = startRow; r < ROWS; r++) {
@@ -737,6 +742,7 @@ function lock() {
     if (fullRow === -1) {
       // No more full rows — settle any residual hanging blocks, then spawn next piece
       applyGravityUntilStable(() => {
+        if (gameGen !== myGen) return;
         clearing = false;
         clearingRows = [];
         if (cleared) {
@@ -750,13 +756,14 @@ function lock() {
         piece = nextPiece;
         nextPiece = randomPiece();
         if (collides(piece.matrix, piece.x, piece.y)) endGame();
-      });
+      }, myGen);
       return;
     }
     cleared++;
     clearingRows = [fullRow];
     sfx('clear');
     setTimeout(() => {
+      if (gameGen !== myGen) return;
       const minNum = Math.min(...board[fullRow].map(cell => cell.num));
       const subtractBlocks = [];
       const zeroedCols = [];
@@ -782,8 +789,10 @@ function lock() {
         startTime: performance.now()
       });
       setTimeout(() => {
+        if (gameGen !== myGen) return;
         subtractingAnim = null;
         applyColumnFall(zeroedCols, fullRow, () => {
+          if (gameGen !== myGen) return;
           // Re-check same row: if blocks fell into it and filled it, process it again;
           // otherwise advance to the row below
           const nextStart = board[fullRow].every(cell => cell !== null) ? fullRow : fullRow + 1;
@@ -1036,6 +1045,7 @@ function endGame() {
 }
 
 function startGame() {
+  gameGen++;
   board = newBoard();
   score = 0; level = 1; lines = 0;
   dropInterval = nesInterval(1);

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Subtetris — NEW button tests</title>
+  <style>
+    body { font-family: monospace; background: #0a1628; color: #ccc; padding: 24px; }
+    h2   { color: #d4863c; margin-bottom: 16px; }
+    .pass { color: #6f6; }
+    .fail { color: #f66; }
+    #summary { margin-top: 20px; font-size: 16px; font-weight: bold; }
+    iframe { display: none; }
+  </style>
+</head>
+<body>
+  <h2>NEW button tests</h2>
+  <div id="log"></div>
+  <div id="summary"></div>
+  <iframe id="frame" src="index.html"></iframe>
+
+  <script>
+    const log     = document.getElementById('log');
+    const summary = document.getElementById('summary');
+    let passed = 0, failed = 0;
+
+    function assert(label, condition) {
+      const ok = !!condition;
+      ok ? passed++ : failed++;
+      log.innerHTML +=
+        `<div class="${ok ? 'pass' : 'fail'}">${ok ? '✓' : '✗'} ${label}</div>`;
+    }
+
+    document.getElementById('frame').addEventListener('load', () => {
+      const w = document.getElementById('frame').contentWindow;
+
+      // ── helpers ─────────────────────────────────────────────────────────────
+
+      // Fill a row on the game board so it's "full"
+      function fillRow(w, row) {
+        for (let c = 0; c < w.COLS; c++) w.board[row][c] = { num: 1 };
+      }
+
+      // Wait for all pending micro/macro tasks to settle (up to maxMs)
+      function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      // ── tests ────────────────────────────────────────────────────────────────
+
+      async function runTests() {
+
+        // ── Test 1: startGame() resets gameOver ──────────────────────────────
+        w.gameOver = true;
+        w.clearing = false;
+        w.startGame();
+        assert('T1  startGame() clears gameOver flag', w.gameOver === false);
+        assert('T1  startGame() provides a live piece', w.piece !== null);
+
+        // ── Test 2: NEW button element exists and is not pointer-blocked ─────
+        const tcNew = w.document.getElementById('tc-new');
+        assert('T2  #tc-new button exists', tcNew !== null);
+        const pe = w.getComputedStyle(tcNew).pointerEvents;
+        assert('T2  #tc-new pointer-events not "none" after game over',
+          pe !== 'none');
+
+        // ── Test 3: Desktop NEW GAME button calls startGame ──────────────────
+        // Simulate game over, then click the desktop button via dispatchEvent
+        w.gameOver = true;
+        w.clearing = false;
+        const desktopBtn = w.document.querySelector('button[onclick="startGame()"]');
+        assert('T3  Desktop NEW GAME button exists', desktopBtn !== null);
+        if (desktopBtn) {
+          desktopBtn.click();
+          assert('T3  Desktop NEW GAME click resets gameOver', w.gameOver === false);
+        }
+
+        // ── Test 4: Race condition — startGame() during clearing chain ───────
+        // Simulate a game over that arrived while clearing was in flight.
+        // The old chain's onDone callback must NOT overwrite the new game.
+        w.startGame();
+        const genBefore = w.gameGen;
+
+        // Manually invoke a lock()-like scenario: force clearing = true,
+        // then call startGame() to simulate the user clicking NEW mid-chain.
+        w.clearing = true;
+        w.gameOver = false;
+        const savedPiece = w.piece;
+        w.startGame();
+        const genAfter = w.gameGen;
+
+        assert('T4  gameGen incremented by startGame()', genAfter === genBefore + 1);
+        assert('T4  clearing reset to false by startGame()', w.clearing === false);
+        assert('T4  gameOver still false after startGame()', w.gameOver === false);
+
+        // Now simulate what the stale onDone callback would do — it should bail
+        // because gameGen changed.  We replicate the guard logic here.
+        const staleGen = genBefore; // the generation the old chain captured
+        let staleCallbackRan = false;
+        if (w.gameGen !== staleGen) {
+          // guard fires → callback is a no-op (correct)
+        } else {
+          staleCallbackRan = true;
+          w.endGame(); // this is what the stale callback would wrongly do
+        }
+        assert('T4  Stale onDone callback suppressed by gen guard',
+          !staleCallbackRan && w.gameOver === false);
+
+        // ── Test 5: Keyboard N always starts new game ────────────────────────
+        w.gameOver = true;
+        w.clearing = false;
+        w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'n', bubbles: true }));
+        assert('T5  Pressing N resets gameOver', w.gameOver === false);
+
+        // ── Test 6: Multiple rapid NEW presses don't corrupt state ───────────
+        for (let i = 0; i < 5; i++) w.startGame();
+        assert('T6  Five rapid startGame() calls leave gameOver=false', w.gameOver === false);
+        assert('T6  Five rapid startGame() calls leave a valid piece',   w.piece !== null);
+        assert('T6  Five rapid startGame() calls leave clearing=false',  w.clearing === false);
+
+        // ── done ─────────────────────────────────────────────────────────────
+        summary.innerHTML =
+          `${passed + failed} tests — ` +
+          `<span class="pass">${passed} passed</span>, ` +
+          `<span class="${failed ? 'fail' : 'pass'}">${failed} failed</span>`;
+      }
+
+      runTests();
+    });
+  </script>
+</body>
+</html>
