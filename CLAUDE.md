@@ -191,6 +191,7 @@ No x-delta needed — `idealX = piece.x` is correct for all their rotation state
 - `cascadeFall()` moves only one row at a time per wave, repeats until settled
 - **`gameGen` counter** — incremented by `startGame()`; every `setTimeout` callback in `lock()`/`step()`/`applyGravityUntilStable()` captures `myGen = gameGen` at call time and returns early if `gameGen !== myGen`. Prevents stale callbacks from overwriting the new game's state or calling `endGame()` after NEW is pressed mid-clearing-chain
 - **Always bump the patch version** (in HTML title, sidebar, and mobile header) on every turn that makes any code change to `index.html` — do this as the final step of that turn
+- **Always update CLAUDE.md** in the same turn as any change that affects game mechanics, UI, layout, or architecture — keep it the source of truth
 - Serve via `python3 -m http.server 3456`
 
 ---
