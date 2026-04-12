@@ -58,9 +58,8 @@ After cells vanish, blocks above fall to fill gaps. The process repeats until no
 Highlight row → subtract & remove zeroed cells → animate falling blocks (ease-out curve, 150ms pause between waves).
 
 Timing scales with **animation speed** setting (`animSpeed`):
-- **SLO:** 500ms per phase
-- **MED:** 250ms per phase (default)
-- **FST:** instant (0ms delays)
+- **ON (med):** 250ms per phase (default)
+- **OFF (fast):** instant (0ms delays)
 
 `animDelay(ms)` controls `setTimeout` durations; `animDuration(ms)` controls render interpolation denominators — both must use the same scale factor so animations complete fully before the next phase fires.
 
@@ -90,7 +89,7 @@ Sidebar (130px wide, same height as board):
 - Level + Lines (side by side) — same dual-layer digit display; Level min 2 digits, Lines min 3 digits
 - Next piece preview canvas (120×90, `flex: none`) — blocks drawn at BLOCK px size
 - **MAX #** — single cycling button, always active (burnt orange), label "MAX n", cycles 4→3→2→1→4
-- **Anim speed** selector: 3 buttons `[SLO][MED][FST]` — active one highlighted burnt orange
+- **Anim speed** selector: 2 buttons `[ON][OFF]` — active one highlighted burnt orange; ON = 250ms per phase, OFF = instant
 - NEW GAME button (rounded bottom corners, burnt orange style)
 - Controls cheatsheet (font-size 10px, line-height 1.6, `flex: 2`)
 - 🔊/🔇 sound toggle icon button at bottom
@@ -123,7 +122,7 @@ Row 2: [  ][  ][  ][    ][   ][    ][▼]
 **Layout rules:**
 - `#touch-ctrl`: `display: grid; grid-template-columns: repeat(7, 50px); grid-template-rows: repeat(2, 50px); gap: 4px; justify-content: center`
 - All buttons are **50×50px squares** — positioned via `grid-column`/`grid-row` inline styles
-- ANIM (`tc-slo`) at `grid-column: 6; grid-row: 1` — cycles SLO→MED→FST; active (orange) unless FST; label "ANIM\nXXX"
+- ANIM (`tc-slo`) at `grid-column: 6; grid-row: 1` — toggles ON↔OFF; always navy blue; label "ANIM\nON" or "ANIM\nOFF"
 - Sound toggle moved to top bar (`mob-snd`)
 - MAX cycles 4→3→2→1→4, label "MAX n"; default MAX 4
 

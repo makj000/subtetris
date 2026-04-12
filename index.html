@@ -288,7 +288,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.117</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.119</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -311,7 +311,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.117</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.119</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -338,9 +338,8 @@
     <div class="panel" style="flex: none; padding: 6px 10px; border-top: none;">
       <h3>Anim</h3>
       <div class="nl-row">
-        <button class="nl-btn"        id="slo-on"  onclick="setAnimSpeed('slow')">SLO</button>
-        <button class="nl-btn active" id="slo-med" onclick="setAnimSpeed('med')">MED</button>
-        <button class="nl-btn"        id="slo-off" onclick="setAnimSpeed('fast')">FST</button>
+        <button class="nl-btn active" id="slo-on"  onclick="setAnimSpeed('med')">ON</button>
+        <button class="nl-btn"        id="slo-off" onclick="setAnimSpeed('fast')">OFF</button>
       </div>
     </div>
     <button onclick="startGame()" style="background:#7a3510;border:2px solid #c87941;border-top:none;border-radius:0 0 6px 6px;color:#ffd0a0;padding:11px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:3px;width:100%;font-weight:bold;transition:background 0.15s;" onmouseover="this.style.background='#a04818'" onmouseout="this.style.background='#7a3510'">NEW GAME</button>
@@ -364,7 +363,7 @@
   <button class="tc-btn tc-txt"   id="tc-pause" style="grid-column:3;grid-row:1">PAUSE</button>
   <button class="tc-btn tc-txt"   id="tc-max"   style="grid-column:4;grid-row:1">MAX 4</button>
   <button class="tc-btn tc-txt"   id="tc-new"   style="grid-column:5;grid-row:1">NEW</button>
-  <button class="tc-btn tc-txt active" id="tc-slo" style="grid-column:6;grid-row:1" onclick="cycleAnimSpeed()">ANIM<br>MED</button>
+  <button class="tc-btn tc-txt" id="tc-slo" style="grid-column:6;grid-row:1" onclick="cycleAnimSpeed()">ANIM<br>ON</button>
   <button class="tc-btn tc-action" id="tc-rot"  style="grid-column:7;grid-row:1">↺</button>
   <button class="tc-btn tc-blank"               style="grid-column:1;grid-row:2"></button>
   <button class="tc-btn tc-blank"               style="grid-column:2;grid-row:2"></button>
@@ -410,15 +409,15 @@ let board, piece, nextPiece, score, level, lines, gameOver, paused, clearing, cl
 let gameGen = 0; // incremented on each startGame(); stale async chains check this to self-cancel
 let numLevel = 4;
 const supportModel = 'cluster'; // fixed; controls hidden
-let animSpeed = 'med'; // 'slow' | 'med' | 'fast'
+let animSpeed = 'med'; // 'med' | 'fast'
 let highScore = parseInt(localStorage.getItem('subtetris_hi')       || '0', 10);
 let highLevel = parseInt(localStorage.getItem('subtetris_hi_lvl')   || '1', 10);
 let highLines = parseInt(localStorage.getItem('subtetris_hi_lines') || '0', 10);
 let scorePopups = [];
 const CLEAR_MS = 500;
 const FALL_MS = 500;
-function animDelay(ms)    { return animSpeed === 'slow' ? ms : animSpeed === 'med' ? Math.round(ms / 2) : 0; }
-function animDuration(ms) { return animSpeed === 'slow' ? ms : animSpeed === 'med' ? Math.round(ms / 2) : 1; }
+function animDelay(ms)    { return animSpeed === 'med' ? Math.round(ms / 2) : 0; }
+function animDuration(ms) { return animSpeed === 'med' ? Math.round(ms / 2) : 1; }
 const POPUP_MS = 1200;
 
 // ── Sound engine ──
@@ -519,16 +518,15 @@ function cycleNumLevel() {
 
 function setAnimSpeed(speed) {
   animSpeed = speed;
-  ['slo-on','slo-med','slo-off'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle('active', id === {'slow':'slo-on','med':'slo-med','fast':'slo-off'}[speed]);
-  });
+  const on  = document.getElementById('slo-on');
+  const off = document.getElementById('slo-off');
+  if (on)  on.classList.toggle('active',  speed === 'med');
+  if (off) off.classList.toggle('active', speed === 'fast');
   const mb = document.getElementById('tc-slo');
-  const labels = { slow: 'SLO', med: 'MED', fast: 'FST' };
-  if (mb) { mb.innerHTML = 'ANIM<br>' + labels[speed]; mb.classList.toggle('active', speed !== 'fast'); }
+  if (mb) mb.innerHTML = 'ANIM<br>' + (speed === 'med' ? 'ON' : 'OFF');
 }
 function cycleAnimSpeed() {
-  setAnimSpeed(animSpeed === 'slow' ? 'med' : animSpeed === 'med' ? 'fast' : 'slow');
+  setAnimSpeed(animSpeed === 'med' ? 'fast' : 'med');
 }
 
 function randomPiece() {
