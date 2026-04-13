@@ -14,7 +14,15 @@
       "Bash(curl -s http://localhost:3737/api/stats)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''prompts:'''', d[''''totalPrompts''''], ''''sessions:'''', d[''''totalSessions'''']\\)\")",
       "Bash(node -e \"require\\('puppeteer'\\); console.log\\('puppeteer ok'\\)\")",
-      "Bash(node -e \"require\\('puppeteer-core'\\); console.log\\('puppeteer-core ok'\\)\")"
+      "Bash(node -e \"require\\('puppeteer-core'\\); console.log\\('puppeteer-core ok'\\)\")",
+      "Bash(identify /Users/kma/dev/game/subtetris/ios/App/App/Assets.xcassets/Splash.imageset/*.png)",
+      "Bash(file /Users/kma/dev/game/subtetris/ios/App/App/Assets.xcassets/Splash.imageset/*.png)",
+      "Bash(ls /Users/kma/dev/game/subtetris/*.sh)",
+      "Bash(ls /Users/kma/dev/game/subtetris/splash*)",
+      "Bash(identify /Users/kma/dev/game/subtetris/icons/splash*.png)",
+      "Bash(file /Users/kma/dev/game/subtetris/icons/splash*.png)",
+      "Bash(ls -lh /Users/kma/dev/game/subtetris/ios/App/App/Assets.xcassets/Splash.imageset/ identify /Users/kma/dev/game/subtetris/ios/App/App/Assets.xcassets/Splash.imageset/*.png)",
+      "Bash(awk '{print $1, $3}')"
     ]
   }
 }

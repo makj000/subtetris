@@ -1,23 +1,39 @@
 #!/usr/bin/env python3
 """
-Generate Subtetris App Store screenshots and launch-screen splash images.
+Generate Subtetris launch-screen splash images.
 
 Run from the project root:
-    python3 icons/gen_splash.py
+    python3 icons/generate_splash.py
 
 Outputs (in icons/):
-    screenshot-6.7inch.png   1290×2796  iPhone 15 Pro Max — required by App Store
-    screenshot-6.5inch.png   1242×2688  iPhone 11 Pro Max — required by App Store
-    splash-2732x2732.png     2732×2732  Universal launch screen / iPad
+    splash-2732x2732.png     2732×2732  Master launch screen (all sizes derived from this)
 
-Also copies launch-screen image to:
+    iPhone splash images (named by display size):
+    splash-6.9inch.png       1320×2868  iPhone 16 Pro Max
+    splash-6.5inch.png       1242×2688  iPhone 11 Pro Max / XS Max
+    splash-6.3inch.png       1206×2622  iPhone 16 Pro
+    splash-6.1inch.png       1179×2556  iPhone 16 / 15 / 14
+    splash-5.5inch.png       1242×2208  iPhone 8 Plus / 7 Plus
+    splash-4.7inch.png        750×1334  iPhone SE (3rd gen) / 8 / 7
+    splash-4.0inch.png        640×1136  iPhone SE (1st gen) / 5s
+    splash-3.5inch.png        640×960   iPhone 4s
+
+    iPad splash images:
+    splash-2048x2732.png    2048×2732   iPad Pro 12.9" @2x
+    splash-2064x2752.png    2064×2752   iPad Pro 13" @2x
+
+Also copies all splash images to:
     ios/App/App/Assets.xcassets/Splash.imageset/
-        splash.png, splash-2732x2732.png,
-        splash-2732x2732-1.png, splash-2732x2732-2.png
 """
 
-import subprocess, os, json, random, sys
+import json
+import os
+import random
+import shutil
+import subprocess
+import sys
 from pathlib import Path
+
 from PIL import Image
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -28,13 +44,6 @@ SPLASH_DIR   = PROJECT_ROOT / 'ios/App/App/Assets.xcassets/Splash.imageset'
 CHROME       = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 TMP_HTML     = '/tmp/subtetris_ss_gen.html'
 TMP_RAW      = '/tmp/subtetris_ss_raw.png'
-
-# ── App Store target sizes ─────────────────────────────────────────────────
-SIZES = {
-    'screenshot-6.7inch.png': (1290, 2796),   # iPhone 15 Pro Max (required)
-    'screenshot-6.5inch.png': (1242, 2688),   # iPhone 11 Pro Max (required)
-    'splash-2732x2732.png':   (2732, 2732),   # Launch screen / iPad
-}
 
 NAVY = (10, 22, 40)   # #0a1628
 
@@ -172,56 +181,127 @@ if result.returncode != 0 or not os.path.exists(TMP_RAW):
 # ── Load and crop to content ───────────────────────────────────────────────
 raw = Image.open(TMP_RAW)
 rw, rh = raw.size
-arr_raw = __import__('numpy').array(raw)
+import numpy as np
+arr_raw = np.array(raw)
 
 # Find bottom of content (trim trailing navy)
-nav = __import__('numpy').array(NAVY)
+nav = np.array(NAVY)
 content_h = rh
 for y in range(rh - 1, 0, -1):
-    if __import__('numpy').abs(arr_raw[y, :, :3].astype(int) - nav).max(axis=1).max() > 15:
+    if np.abs(arr_raw[y, :, :3].astype(int) - nav).max(axis=1).max() > 15:
         content_h = y + 1
         break
 
-src = raw.crop((0, 0, rw, content_h))
+screenshot = raw.crop((0, 0, rw, content_h))
 print(f"Source image: {rw}×{content_h}px (trimmed from {rh}px)")
 
-# ── Composite into each target size ───────────────────────────────────────
-def composite(src, target_w, target_h):
-    """Scale src to fit within target dimensions, centre on navy canvas."""
-    sw, sh = src.size
-    scale = min(target_w / sw, target_h / sh)
-    new_w = int(sw * scale)
-    new_h = int(sh * scale)
-    scaled = src.resize((new_w, new_h), Image.LANCZOS)
+# ── Helper ─────────────────────────────────────────────────────────────────
+def composite(img, target_w, target_h):
+    """Scale img to fit within target dimensions, centred on navy canvas."""
+    sw, sh = img.size
+    scale  = min(target_w / sw, target_h / sh)
+    new_w, new_h = int(sw * scale), int(sh * scale)
+    scaled = img.resize((new_w, new_h), Image.LANCZOS)
     canvas = Image.new('RGB', (target_w, target_h), NAVY)
-    x_off = (target_w - new_w) // 2
-    y_off = (target_h - new_h) // 2
-    canvas.paste(scaled, (x_off, y_off))
+    canvas.paste(scaled, ((target_w - new_w) // 2, (target_h - new_h) // 2))
     return canvas
 
 SCRIPT_DIR.mkdir(exist_ok=True)
-generated = []
 
-for filename, (tw, th) in SIZES.items():
-    out_path = SCRIPT_DIR / filename
-    img = composite(src, tw, th)
-    img.save(out_path, optimize=True)
-    generated.append((filename, tw, th))
-    print(f"  ✓ icons/{filename}  ({tw}×{th})")
+# ── Master splash ──────────────────────────────────────────────────────────
+master_path = SCRIPT_DIR / 'splash-2732x2732.png'
+composite(screenshot, 2732, 2732).save(master_path, optimize=True)
+print(f"  ✓ icons/splash-2732x2732.png  (2732×2732)")
 
-# ── Copy launch-screen image to Xcode Splash.imageset ─────────────────────
-splash_src = SCRIPT_DIR / 'splash-2732x2732.png'
-if SPLASH_DIR.exists() and splash_src.exists():
-    for name in ['splash.png', 'splash-2732x2732.png',
-                 'splash-2732x2732-1.png', 'splash-2732x2732-2.png']:
-        dest = SPLASH_DIR / name
-        import shutil
-        shutil.copy2(splash_src, dest)
-    print(f"  ✓ Copied to Splash.imageset/ (4 files)")
-else:
-    print(f"  ! Splash.imageset not found — skipping Xcode copy")
+# ── Derived splash sizes ───────────────────────────────────────────────────
+# iPhone splashes: derive from screenshot (portrait source) so content fills height.
+# iPad splashes: derive from square master (landscape-safe source).
+master = Image.open(master_path)
+
+# iPhone splashes named by display size (width × height in device pixels)
+IPHONE_SPLASHES = {
+    'splash-6.9inch.png': (1320, 2868),  # iPhone 16 Pro Max
+    'splash-6.5inch.png': (1242, 2688),  # iPhone 11 Pro Max / XS Max
+    'splash-6.3inch.png': (1206, 2622),  # iPhone 16 Pro
+    'splash-6.1inch.png': (1179, 2556),  # iPhone 16 / 15 / 14
+    'splash-5.5inch.png': (1242, 2208),  # iPhone 8 Plus / 7 Plus
+    'splash-4.7inch.png': (750,  1334),  # iPhone SE (3rd gen) / 8 / 7
+    'splash-4.0inch.png': (640,  1136),  # iPhone SE (1st gen) / 5s
+    'splash-3.5inch.png': (640,   960),  # iPhone 4s
+}
+
+# iPad splashes (kept for Xcode asset catalog compatibility)
+IPAD_SPLASHES = {
+    'splash-2048x2732.png': (2048, 2732),  # iPad Pro 12.9" @2x
+    'splash-2064x2752.png': (2064, 2752),  # iPad Pro 13" @2x
+}
+
+# iPhone splashes use the portrait screenshot as source (avoids big top/bottom margins
+# that result from compositing a square master into a portrait canvas).
+for name, (w, h) in IPHONE_SPLASHES.items():
+    composite(screenshot, w, h).save(SCRIPT_DIR / name, optimize=True)
+    print(f"  ✓ icons/{name}  ({w}×{h})")
+
+# iPad splashes use the portrait screenshot as source (same as iPhones) so content
+# fills the height without big top/bottom margins.
+for name, (w, h) in IPAD_SPLASHES.items():
+    composite(screenshot, w, h).save(SCRIPT_DIR / name, optimize=True)
+    print(f"  ✓ icons/{name}  ({w}×{h})")
+
+# ── Copy all splash images to Xcode Splash.imageset ───────────────────────
+SPLASH_FILES = (
+    ['splash-2732x2732.png']
+    + list(IPHONE_SPLASHES.keys())
+    + list(IPAD_SPLASHES.keys())
+)
+
+SPLASH_DIR.mkdir(parents=True, exist_ok=True)
+for name in SPLASH_FILES:
+    img_path = SCRIPT_DIR / name
+    if img_path.exists():
+        shutil.copy2(img_path, SPLASH_DIR / name)
+        print(f"  ✓ Copied → Splash.imageset/{name}")
+    else:
+        print(f"  ! Missing {img_path} — skipping")
+
+# Remove stale files no longer referenced
+for stale in [
+    'splash-2732x2732-1.png', 'splash-2732x2732-2.png',
+    'splash-390x844.png', 'splash-1242x2688.png', 'splash-1284x2778.png',
+    'screenshot-6.7inch.png', 'screenshot-6.5inch.png',
+]:
+    p = SPLASH_DIR / stale
+    if p.exists():
+        p.unlink()
+        print(f"  ✓ Removed stale Splash.imageset/{stale}")
+
+# Remove old screenshot files from icons/ directory
+for stale in ['screenshot-6.7inch.png', 'screenshot-6.5inch.png']:
+    p = SCRIPT_DIR / stale
+    if p.exists():
+        p.unlink()
+        print(f"  ✓ Removed stale icons/{stale}")
+
+# Write Contents.json
+# Maps each display-size splash to the nearest Xcode idiom/scale slot.
+# Xcode only needs representative entries; extra files are ignored unless referenced.
+contents = {
+    "images": [
+        # iPhone @2x slots (375pt / 414pt logical → 2x)
+        {"filename": "splash-4.7inch.png", "idiom": "iphone", "scale": "2x"},
+        # iPhone @3x slots (various logical sizes → 3x)
+        {"filename": "splash-6.9inch.png", "idiom": "iphone", "scale": "3x"},
+        # iPad @2x slots
+        {"filename": "splash-2048x2732.png", "idiom": "ipad", "scale": "2x"},
+        # Universal fallback
+        {"filename": "splash-2732x2732.png", "idiom": "universal", "scale": "3x"},
+    ],
+    "info": {"author": "xcode", "version": 1},
+}
+(SPLASH_DIR / 'Contents.json').write_text(json.dumps(contents, indent=2) + '\n')
+print("  ✓ Wrote   Splash.imageset/Contents.json")
 
 print("\nDone.")
-print("Upload icons/screenshot-6.7inch.png and icons/screenshot-6.5inch.png")
-print("to App Store Connect → App Screenshots.")
+print("iPhone splash images named by display size are in icons/splash-*.inch.png")
+print("All splash images copied to ios/App/App/Assets.xcassets/Splash.imageset/")
 print("Run ./update_mobile_app.sh to sync launch screen to iOS.")
