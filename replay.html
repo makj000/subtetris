@@ -124,9 +124,16 @@
     /* Progress bar */
     #progress-wrap {
       flex-shrink:0;
-      height:4px; background:#071020; border:1px solid #1e3a5f; border-top:none;
+      height:22px; background:#071020; border:1px solid #1e3a5f; border-top:none;
+      cursor:pointer; position:relative; user-select:none;
     }
-    #progress-fill { height:100%; background:#7a3510; width:0%; transition:width 0.2s; }
+    #progress-wrap:hover #progress-fill { background:#a04818; }
+    #progress-fill { height:100%; background:#7a3510; width:0%; transition:width 0.1s; pointer-events:none; }
+    #progress-label {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      font-size:9px; letter-spacing:1px; color:rgba(255,255,255,0.65);
+      pointer-events:none; white-space:nowrap;
+    }
 
     /* Status message overlay */
     #status-msg {
@@ -203,7 +210,10 @@
       <button id="restart-btn" disabled>↺</button>
     </div>
 
-    <div id="progress-wrap"><div id="progress-fill"></div></div>
+    <div id="progress-wrap">
+      <div id="progress-fill"></div>
+      <div id="progress-label">— / —</div>
+    </div>
 
     <div id="status-msg">Load a .jsonl<br>replay file to begin</div>
   </div>
@@ -752,10 +762,186 @@ function updateUI() {
   document.getElementById('cur-piece-type').textContent = piece ? piece.type : '—';
 }
 
+// ── Sync simulation for seek ──
+// Standalone rotate (no global piece state)
+function rotatePieceFrom(matrix, rot, x, y, type) {
+  const rotated = rotate(matrix);
+  const newRot = (rot + 1) % 4;
+  let idealX;
+  if (type === 'I') {
+    const m = matrix;
+    if      (m[1][0]) idealX = x - 1;
+    else if (m[2][0]) idealX = x;
+    else if (m[0][2]) idealX = x + 1;
+    else              idealX = x;
+  } else {
+    idealX = x + (ROT_X_DELTA[type]?.[newRot] ?? 0);
+  }
+  for (const kick of [0, -1, 1, -2, 2]) {
+    const tx = idealX + kick;
+    if (!collides(rotated, tx, y)) return { matrix: rotated, rot: newRot, x: tx };
+  }
+  return { matrix, rot, x };
+}
+
+// Reconstruct a piece at its final locked position by replaying moves against current board
+function reconstructAtFinalState(entry) {
+  const tmpl = TEMPLATES[entry.piece];
+  let i = 0;
+  let matrix = tmpl.map(row => row.map(v => v ? entry.nums[i++] : 0));
+  let x = Math.floor(COLS/2) - Math.ceil(tmpl[0].length/2);
+  let y = 0, rot = 0;
+  for (const move of entry.moves) {
+    if      (move === 'L' && !collides(matrix, x-1, y)) x--;
+    else if (move === 'R' && !collides(matrix, x+1, y)) x++;
+    else if (move === 'U') {
+      const r = rotatePieceFrom(matrix, rot, x, y, entry.piece);
+      matrix = r.matrix; rot = r.rot; x = r.x;
+    }
+    else if (move === 'D' && !collides(matrix, x, y+1)) y++;
+  }
+  while (!collides(matrix, x, y+1)) y++;
+  return { matrix, x, y };
+}
+
+function syncApplyColumnFall(zeroedCols, fullRow) {
+  if (!zeroedCols.length) return;
+  const unique = [...new Set(zeroedCols)];
+  const fallers = [];
+  const claimed = new Set();
+  for (const col of unique) {
+    const row = fullRow - 1;
+    if (row >= 0 && board[row][col] !== null) {
+      const tk = fullRow + ',' + col;
+      if (!claimed.has(tk)) {
+        fallers.push({ col, fromRow: row, toRow: fullRow, num: board[row][col].num });
+        board[row][col] = null;
+        claimed.add(tk);
+      }
+    }
+  }
+  if (supportModel === 'cluster' && fallers.length) {
+    const fallerSet = new Set(fallers.map(f => f.fromRow + ',' + f.col));
+    const stack = [...fallers];
+    while (stack.length) {
+      const f = stack.pop();
+      const vertNew = [], horizNew = [];
+      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+        const nr = f.fromRow + dr, nc = f.col + dc;
+        if (nr < 0 || nr >= fullRow || nc < 0 || nc >= COLS) continue;
+        if (fallerSet.has(nr + ',' + nc)) continue;
+        if (board[nr][nc] === null) continue;
+        let selfGrounded = true;
+        for (let gr = nr+1; gr < ROWS; gr++) {
+          if (board[gr][nc] === null) { selfGrounded = false; break; }
+        }
+        if (selfGrounded) continue;
+        const destRow = nr + 1;
+        if (destRow > fullRow) continue;
+        if (board[destRow][nc] !== null) continue;
+        const tk = destRow + ',' + nc;
+        if (claimed.has(tk)) continue;
+        const entry = { col: nc, fromRow: nr, toRow: destRow, num: board[nr][nc].num };
+        fallers.push(entry);
+        board[nr][nc] = null;
+        claimed.add(tk);
+        fallerSet.add(nr + ',' + nc);
+        if (dc === 0) vertNew.push(entry); else horizNew.push(entry);
+      }
+      stack.push(...horizNew);
+      stack.push(...vertNew);
+    }
+  }
+  for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
+}
+
+function syncGravityUntilStable() {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const hanging = findHangingBlocks();
+    if (!hanging.length) break;
+    hanging.sort((a, b) => b.r - a.r);
+    for (const {r, c} of hanging) {
+      if (r+1 < ROWS && board[r+1][c] === null) {
+        board[r+1][c] = board[r][c];
+        board[r][c] = null;
+        changed = true;
+      }
+    }
+  }
+}
+
+function syncStepClear() {
+  let cleared = 0, earnedScore = 0;
+  function doStep(startRow, chainDepth) {
+    let fullRow = -1;
+    for (let r = startRow; r < ROWS; r++) {
+      if (board[r].every(c => c !== null)) { fullRow = r; break; }
+    }
+    if (fullRow === -1) { syncGravityUntilStable(); return; }
+    cleared++;
+    const minNum = Math.min(...board[fullRow].map(c => c.num));
+    const zeroedCols = [];
+    for (let c = 0; c < COLS; c++) {
+      board[fullRow][c].num -= minNum;
+      if (board[fullRow][c].num <= 0) { board[fullRow][c] = null; zeroedCols.push(c); }
+    }
+    earnedScore += Math.round(100 * level * Math.pow(minNum, 1.5) * Math.pow(1.5, chainDepth));
+    syncApplyColumnFall(zeroedCols, fullRow);
+    const nextStart = board[fullRow].every(c => c !== null) ? fullRow : fullRow + 1;
+    doStep(nextStart, chainDepth + 1);
+  }
+  doStep(0, 0);
+  return { cleared, earnedScore };
+}
+
+function seekToIndex(targetIdx) {
+  if (!replayEntries.length) return;
+  targetIdx = Math.max(0, Math.min(targetIdx, replayEntries.length));
+  replayGen++;
+  const gen = replayGen;
+  replayPlaying = false; replayPaused = false;
+  clearing = false; clearingRows = []; fallingAnim = null; subtractingAnim = null; scorePopups = [];
+  piece = null;
+
+  // Sync-simulate board state up to targetIdx
+  board = newBoard();
+  score = 0; level = 1; lines = 0;
+  for (let i = 0; i < targetIdx; i++) {
+    const fp = reconstructAtFinalState(replayEntries[i]);
+    for (let r = 0; r < fp.matrix.length; r++)
+      for (let c = 0; c < fp.matrix[r].length; c++)
+        if (fp.matrix[r][c] && fp.y+r >= 0)
+          board[fp.y+r][fp.x+c] = { num: fp.matrix[r][c] };
+    const { cleared, earnedScore } = syncStepClear();
+    lines += cleared; score += earnedScore; level = Math.floor(lines/10) + 1;
+  }
+
+  replayIdx = targetIdx;
+  if (targetIdx >= replayEntries.length) {
+    replayPlaying = false;
+    document.getElementById('play-btn').textContent = '▶ PLAY';
+    document.getElementById('status-msg').textContent = 'Replay complete';
+    document.getElementById('status-msg').style.display = 'flex';
+  } else {
+    replayPlaying = true;
+    document.getElementById('play-btn').textContent = '⏸ PAUSE';
+    document.getElementById('play-btn').disabled = false;
+    document.getElementById('restart-btn').disabled = false;
+    document.getElementById('status-msg').style.display = 'none';
+    playEntry(gen);
+  }
+  updateUI();
+  updateProgress();
+}
+
 function updateProgress() {
   const total = replayEntries.length;
   const done = replayIdx;
+  const label = total ? `piece ${done} / ${total}` : '— / —';
   document.getElementById('piece-progress').textContent = `${done} / ${total}`;
+  document.getElementById('progress-label').textContent = label;
   const pct = total ? (done / total * 100) : 0;
   document.getElementById('progress-fill').style.width = pct + '%';
 }
@@ -844,6 +1030,19 @@ document.querySelectorAll('.spd-btn').forEach(btn => {
     speedMult = parseFloat(btn.dataset.spd);
   });
 });
+
+// Progress bar — click or drag to seek
+const progressWrap = document.getElementById('progress-wrap');
+function seekFromEvent(e) {
+  if (!replayEntries.length) return;
+  const rect = progressWrap.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  seekToIndex(Math.round(pct * replayEntries.length));
+}
+let progressDragging = false;
+progressWrap.addEventListener('mousedown', e => { progressDragging = true; seekFromEvent(e); });
+document.addEventListener('mousemove', e => { if (progressDragging) seekFromEvent(e); });
+document.addEventListener('mouseup', () => { progressDragging = false; });
 
 // Space = pause/resume
 document.addEventListener('keydown', e => {
