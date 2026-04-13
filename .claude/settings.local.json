@@ -12,7 +12,9 @@
       "Bash(npm install:*)",
       "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
       "Bash(curl -s http://localhost:3737/api/stats)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''prompts:'''', d[''''totalPrompts''''], ''''sessions:'''', d[''''totalSessions'''']\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''prompts:'''', d[''''totalPrompts''''], ''''sessions:'''', d[''''totalSessions'''']\\)\")",
+      "Bash(node -e \"require\\('puppeteer'\\); console.log\\('puppeteer ok'\\)\")",
+      "Bash(node -e \"require\\('puppeteer-core'\\); console.log\\('puppeteer-core ok'\\)\")"
     ]
   }
 }
