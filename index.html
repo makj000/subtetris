@@ -288,7 +288,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.119</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.120</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -311,7 +311,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.119</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.120</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -342,7 +342,8 @@
         <button class="nl-btn"        id="slo-off" onclick="setAnimSpeed('fast')">OFF</button>
       </div>
     </div>
-    <button onclick="startGame()" style="background:#7a3510;border:2px solid #c87941;border-top:none;border-radius:0 0 6px 6px;color:#ffd0a0;padding:11px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:3px;width:100%;font-weight:bold;transition:background 0.15s;" onmouseover="this.style.background='#a04818'" onmouseout="this.style.background='#7a3510'">NEW GAME</button>
+    <button onclick="startGame()" style="background:#7a3510;border:2px solid #c87941;border-top:none;border-radius:0 0 0 0;color:#ffd0a0;padding:11px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:3px;width:100%;font-weight:bold;transition:background 0.15s;" onmouseover="this.style.background='#a04818'" onmouseout="this.style.background='#7a3510'">NEW GAME</button>
+    <button id="replay-btn" onclick="downloadReplay()" style="background:#071020;border:2px solid #1e3a5f;border-top:none;border-radius:0 0 6px 6px;color:#778;padding:6px;font-family:'Courier New',monospace;font-size:10px;cursor:pointer;letter-spacing:2px;width:100%;transition:background 0.15s;" onmouseover="this.style.background='#0d1f3c'" onmouseout="this.style.background='#071020'">SAVE REPLAY</button>
     <div class="panel" style="flex: 2; font-size:10px; color:#aaa; line-height:1.6; justify-content: flex-start;">
       <h3>Controls</h3>
       ← → move<br>
@@ -407,6 +408,7 @@ const mobCtx = mobNext.getContext('2d');
 
 let board, piece, nextPiece, score, level, lines, gameOver, paused, clearing, clearingRows, fallingAnim, subtractingAnim, dropTimer, dropInterval, softDrop;
 let gameGen = 0; // incremented on each startGame(); stale async chains check this to self-cancel
+let replayLog = [], replayGameStart = 0, replayMoves = '', replayCurType = null, replayCurNums = null, replayCurSpawnT = 0;
 let numLevel = 4;
 const supportModel = 'cluster'; // fixed; controls hidden
 let animSpeed = 'med'; // 'med' | 'fast'
@@ -529,6 +531,34 @@ function cycleAnimSpeed() {
   setAnimSpeed(animSpeed === 'med' ? 'fast' : 'med');
 }
 
+function replayExtractNums(matrix) {
+  const nums = [];
+  for (const row of matrix) for (const v of row) if (v) nums.push(v);
+  return nums;
+}
+function replaySpawn(p) {
+  replayCurType = p.type;
+  replayCurNums = replayExtractNums(p.matrix); // matrix is at rot=0 at spawn
+  replayCurSpawnT = Math.round(performance.now() - replayGameStart);
+  replayMoves = '';
+}
+function replayLock() {
+  if (!replayCurType || !piece) return;
+  replayLog.push({ t: replayCurSpawnT, piece: replayCurType, nums: replayCurNums, moves: replayMoves, rot: piece.rot, col: piece.x });
+}
+function downloadReplay() {
+  if (!replayLog.length) return;
+  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.120', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
+  const blob = new Blob([text], { type: 'application/jsonl' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `subtetris-${new Date().toISOString().slice(0,19).replace(/[T:]/g, '-')}.jsonl`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function randomPiece() {
   const keys = Object.keys(TEMPLATES);
   const key = keys[Math.floor(Math.random() * keys.length)];
@@ -582,6 +612,7 @@ function rotatePiece() {
       piece.matrix = rotated;
       piece.x = tx;
       piece.rot = newRot;
+      replayMoves += 'U';
       return;
     }
   }
@@ -718,6 +749,7 @@ function applyColumnFall(zeroedCols, fullRow, onDone) {
 }
 
 function lock() {
+  replayLock();
   sfx('lock');
   for (let r = 0; r < piece.matrix.length; r++)
     for (let c = 0; c < piece.matrix[r].length; c++)
@@ -753,6 +785,7 @@ function lock() {
           if (level > prevLevel) sfx('levelup');
           updateUI();
         }
+        replaySpawn(nextPiece);
         piece = nextPiece;
         nextPiece = randomPiece();
         if (collides(piece.matrix, piece.x, piece.y)) endGame();
@@ -1000,7 +1033,7 @@ function gameLoop(ts) {
       dropTimer = ts;
       if (!collides(piece.matrix, piece.x, piece.y + 1)) {
         piece.y++;
-        if (softDrop) { score += 1; updateUI(); }
+        if (softDrop) { score += 1; updateUI(); replayMoves += 'D'; }
       } else {
         lock();
       }
@@ -1055,6 +1088,9 @@ function startGame() {
   fallingAnim = null; subtractingAnim = null; softDrop = false;
   piece = randomPiece();
   nextPiece = randomPiece();
+  replayLog = [];
+  replayGameStart = performance.now();
+  replaySpawn(piece);
   document.getElementById('message').style.display = 'none';
   updateUI();
   updateButtons();
@@ -1075,8 +1111,8 @@ document.addEventListener('keydown', e => {
     togglePause(); return;
   }
   switch (e.key) {
-    case 'ArrowLeft':  if (!collides(piece.matrix, piece.x-1, piece.y)) { piece.x--; sfx('move'); } e.preventDefault(); break;
-    case 'ArrowRight': if (!collides(piece.matrix, piece.x+1, piece.y)) { piece.x++; sfx('move'); } e.preventDefault(); break;
+    case 'ArrowLeft':  if (!collides(piece.matrix, piece.x-1, piece.y)) { piece.x--; sfx('move'); replayMoves += 'L'; } e.preventDefault(); break;
+    case 'ArrowRight': if (!collides(piece.matrix, piece.x+1, piece.y)) { piece.x++; sfx('move'); replayMoves += 'R'; } e.preventDefault(); break;
     case 'ArrowDown':  softDrop = true; e.preventDefault(); break;
     case 'ArrowUp': rotatePiece(); sfx('rotate'); e.preventDefault(); break;
     case 's': case 'S': toggleSound(); e.preventDefault(); break;
@@ -1112,8 +1148,8 @@ function tc(id, onStart, onEnd) {
   if (onEnd) el.addEventListener('pointerup', e => { e.preventDefault(); onEnd(); });
 }
 
-tc('tc-left',  () => guardedAction(() => { if (!collides(piece.matrix, piece.x-1, piece.y)) { piece.x--; sfx('move'); } }));
-tc('tc-right', () => guardedAction(() => { if (!collides(piece.matrix, piece.x+1, piece.y)) { piece.x++; sfx('move'); } }));
+tc('tc-left',  () => guardedAction(() => { if (!collides(piece.matrix, piece.x-1, piece.y)) { piece.x--; sfx('move'); replayMoves += 'L'; } }));
+tc('tc-right', () => guardedAction(() => { if (!collides(piece.matrix, piece.x+1, piece.y)) { piece.x++; sfx('move'); replayMoves += 'R'; } }));
 tc('tc-rot',   () => guardedAction(() => { rotatePiece(); sfx('rotate'); }));
 tc('tc-drop',  () => guardedAction(() => { softDrop = true; }),
                () => { softDrop = false; });
@@ -1166,8 +1202,8 @@ canvas.addEventListener('touchend', e => {
     rotatePiece(); sfx('rotate');
   } else if (Math.abs(dx) >= Math.abs(dy)) {
     // horizontal flick
-    if (dx < 0) { if (!collides(piece.matrix, piece.x - 1, piece.y)) { piece.x--; sfx('move'); } }
-    else         { if (!collides(piece.matrix, piece.x + 1, piece.y)) { piece.x++; sfx('move'); } }
+    if (dx < 0) { if (!collides(piece.matrix, piece.x - 1, piece.y)) { piece.x--; sfx('move'); replayMoves += 'L'; } }
+    else         { if (!collides(piece.matrix, piece.x + 1, piece.y)) { piece.x++; sfx('move'); replayMoves += 'R'; } }
   }
 }, { passive: false });
 

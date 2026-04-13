@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subtetris Replay</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+    body {
+      background:#0a1628;
+      display:flex; justify-content:center; align-items:center;
+      min-height:100vh;
+      font-family:'Courier New',monospace;
+      color:#eee;
+    }
+    #container { display:flex; gap:20px; align-items:flex-start; padding:20px; }
+    canvas { border:2px solid #1e3a5f; background:#071020; display:block; }
+
+    #sidebar {
+      width:200px;
+      display:flex; flex-direction:column;
+      height:604px; /* match canvas */
+      overflow:hidden;
+    }
+    .panel {
+      background:#0d1f3c;
+      border:1px solid #1e3a5f;
+      padding:8px 10px;
+      flex-shrink:0;
+    }
+    .panel + .panel { border-top:none; }
+    .panel h3 {
+      font-size:9px; letter-spacing:2px; color:#888;
+      text-transform:uppercase; margin-bottom:4px;
+    }
+
+    /* Title */
+    #title-panel {
+      background:#071020;
+      border-color:#2a5498;
+      padding:10px;
+      text-align:center;
+    }
+    .name-sub  { color:#d4863c; font-size:15px; font-weight:bold; letter-spacing:2px; }
+    .name-rest { color:#a0c4e8; font-size:15px; font-weight:bold; letter-spacing:2px; }
+    .replay-label { display:block; font-size:9px; letter-spacing:4px; color:#556; margin-top:2px; }
+
+    /* File drop/load */
+    #file-panel { flex-shrink:0; }
+    #dropzone {
+      border:1px dashed #2a5498;
+      border-radius:4px;
+      padding:10px 6px;
+      text-align:center;
+      cursor:pointer;
+      transition:background 0.15s;
+      font-size:10px;
+      color:#668;
+      line-height:1.6;
+    }
+    #dropzone:hover, #dropzone.drag-over { background:#122040; border-color:#4a74c8; color:#aac; }
+    #dropzone button {
+      display:block; width:100%; margin-bottom:5px;
+      background:#1a3a6a; border:1px solid #2a5498; color:#aac;
+      padding:5px; font-size:10px; letter-spacing:2px; cursor:pointer;
+      font-family:'Courier New',monospace; border-radius:2px;
+      transition:background 0.15s;
+    }
+    #dropzone button:hover { background:#254a8a; }
+    #file-input { display:none; }
+
+    /* Metadata */
+    #meta-panel { flex-shrink:0; display:none; }
+    .meta-row { display:flex; justify-content:space-between; font-size:10px; line-height:1.8; color:#99b; }
+    .meta-row span { color:#d4863c; }
+
+    /* Live stats */
+    #stats-panel { flex-shrink:0; }
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+    .stat-block { text-align:center; }
+    .stat-label { font-size:8px; letter-spacing:1px; color:#668; text-transform:uppercase; }
+    .stat-value {
+      font-family:'DSEG7-Classic','Courier New',monospace;
+      font-size:15px; color:#d4863c;
+      letter-spacing:1px;
+    }
+    #piece-progress { font-size:10px; color:#668; text-align:center; margin-top:4px; }
+
+    /* Next preview */
+    #next-panel { background:#040c18; border-color:#2a5498; flex-shrink:0; text-align:center; }
+    #next-canvas { border:none; background:#040c18; }
+
+    /* Speed */
+    #speed-panel { flex-shrink:0; }
+    .speed-btns { display:flex; gap:3px; margin-top:4px; }
+    .spd-btn {
+      flex:1; padding:4px 0; font-size:10px; letter-spacing:1px;
+      background:#0a1a30; border:1px solid #1e3a5f; color:#668;
+      cursor:pointer; font-family:'Courier New',monospace;
+      transition:background 0.1s;
+    }
+    .spd-btn:hover { background:#122040; }
+    .spd-btn.active { background:#7a3510; border-color:#c87941; color:#ffd0a0; }
+
+    /* Controls */
+    #ctrl-panel { flex-shrink:0; display:flex; gap:4px; padding:6px 10px; }
+    #play-btn {
+      flex:3; padding:8px; font-size:11px; letter-spacing:2px;
+      background:#7a3510; border:2px solid #c87941; color:#ffd0a0;
+      cursor:pointer; font-family:'Courier New',monospace; font-weight:bold;
+      transition:background 0.15s; border-radius:2px;
+    }
+    #play-btn:hover { background:#a04818; }
+    #play-btn:disabled { background:#1a2a40; border-color:#1e3a5f; color:#446; cursor:default; }
+    #restart-btn {
+      flex:1; padding:8px; font-size:14px;
+      background:#0a1a30; border:1px solid #1e3a5f; color:#668;
+      cursor:pointer; transition:background 0.1s; border-radius:2px;
+    }
+    #restart-btn:hover { background:#122040; color:#aac; }
+    #restart-btn:disabled { color:#334; cursor:default; }
+
+    /* Progress bar */
+    #progress-wrap {
+      flex-shrink:0;
+      height:4px; background:#071020; border:1px solid #1e3a5f; border-top:none;
+    }
+    #progress-fill { height:100%; background:#7a3510; width:0%; transition:width 0.2s; }
+
+    /* Status message overlay */
+    #status-msg {
+      flex:1; display:flex; align-items:center; justify-content:center;
+      font-size:10px; color:#446; text-align:center; line-height:1.8;
+      padding:8px;
+    }
+  </style>
+</head>
+<body>
+<div id="container">
+  <canvas id="canvas" width="300" height="600"></canvas>
+
+  <div id="sidebar">
+    <div class="panel" id="title-panel">
+      <span class="name-sub">SUB</span><span class="name-rest">TETRIS</span>
+      <span class="replay-label">REPLAY</span>
+    </div>
+
+    <div class="panel" id="file-panel">
+      <div id="dropzone">
+        <button onclick="document.getElementById('file-input').click()">LOAD .JSONL</button>
+        drop file here
+      </div>
+      <input type="file" id="file-input" accept=".jsonl">
+    </div>
+
+    <div class="panel" id="meta-panel">
+      <div class="meta-row">Date <span id="meta-date">—</span></div>
+      <div class="meta-row">MAX # <span id="meta-max">—</span></div>
+      <div class="meta-row">Pieces <span id="meta-pieces">—</span></div>
+      <div class="meta-row">Score <span id="meta-score">—</span></div>
+    </div>
+
+    <div class="panel" id="stats-panel">
+      <div class="stat-grid">
+        <div class="stat-block">
+          <div class="stat-label">Score</div>
+          <div class="stat-value" id="cur-score">0</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-label">Level</div>
+          <div class="stat-value" id="cur-level">1</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-label">Lines</div>
+          <div class="stat-value" id="cur-lines">0</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-label">Piece</div>
+          <div class="stat-value" id="cur-piece-type">—</div>
+        </div>
+      </div>
+      <div id="piece-progress">— / —</div>
+    </div>
+
+    <div class="panel" id="next-panel">
+      <h3>Next</h3>
+      <canvas id="next-canvas" width="120" height="72"></canvas>
+    </div>
+
+    <div class="panel" id="speed-panel">
+      <h3>Speed</h3>
+      <div class="speed-btns">
+        <button class="spd-btn" data-spd="0.5">½×</button>
+        <button class="spd-btn active" data-spd="1">1×</button>
+        <button class="spd-btn" data-spd="2">2×</button>
+        <button class="spd-btn" data-spd="0">⚡</button>
+      </div>
+    </div>
+
+    <div class="panel" id="ctrl-panel" style="padding:6px 10px;">
+      <button id="play-btn" disabled>▶ PLAY</button>
+      <button id="restart-btn" disabled>↺</button>
+    </div>
+
+    <div id="progress-wrap"><div id="progress-fill"></div></div>
+
+    <div id="status-msg">Load a .jsonl<br>replay file to begin</div>
+  </div>
+</div>
+
+<script>
+// ── Constants (must match index.html) ──
+const COLS = 10, ROWS = 20, BLOCK = 30;
+const FALL_MS = 150, CLEAR_MS = 250;
+
+const TEMPLATES = {
+  I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+  O: [[1,1],[1,1]],
+  T: [[0,1,0],[1,1,1],[0,0,0]],
+  S: [[0,1,1],[1,1,0],[0,0,0]],
+  Z: [[1,1,0],[0,1,1],[0,0,0]],
+  J: [[1,0,0],[1,1,1],[0,0,0]],
+  L: [[0,0,1],[1,1,1],[0,0,0]],
+};
+
+const ROT_X_DELTA = {
+  S: [-1, 0, 0, +1],
+  Z: [-1, 0, 0, +1],
+  L: [-1, 0, 0, +1],
+  J: [-1, 0, 0, +1],
+};
+
+const supportModel = 'cluster';
+
+// ── State ──
+let board, piece, score, level, lines, clearing, clearingRows;
+let fallingAnim = null, subtractingAnim = null;
+let scorePopups = [];
+let numLevel = 4;
+
+let replayEntries = [];
+let replayHeader = null;
+let replayIdx = 0;
+let replayGen = 0;
+let replayPlaying = false;
+let replayPaused = false;
+let speedMult = 1; // 0=instant, 0.5, 1, 2
+
+// ── Canvas ──
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const nextCanvas = document.getElementById('next-canvas');
+const nextCtx = nextCanvas.getContext('2d');
+
+// ── Timing ──
+function animDelay(ms)    { return speedMult === 0 ? 0 : Math.round(ms / speedMult); }
+function animDuration(ms) { return speedMult === 0 ? 0 : Math.round(ms / speedMult); }
+function moveDelay()      { return speedMult === 0 ? 0 : Math.round(130 / speedMult); }
+function dropDelay()      { return speedMult === 0 ? 0 : Math.round(45  / speedMult); }
+
+// ── Game logic (identical to index.html) ──
+function newBoard() {
+  return Array.from({length: ROWS}, () => Array(COLS).fill(null));
+}
+
+function rotate(matrix) {
+  const n = matrix.length, m = matrix[0].length;
+  const result = Array.from({length: m}, () => Array(n).fill(0));
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < m; c++)
+      result[c][n-1-r] = matrix[r][c];
+  return result;
+}
+
+function rotatePiece() {
+  const rotated = rotate(piece.matrix);
+  const newRot = (piece.rot + 1) % 4;
+  let idealX;
+  if (piece.type === 'I') {
+    const m = piece.matrix;
+    if      (m[1][0]) idealX = piece.x - 1;
+    else if (m[2][0]) idealX = piece.x;
+    else if (m[0][2]) idealX = piece.x + 1;
+    else              idealX = piece.x;
+  } else {
+    idealX = piece.x + (ROT_X_DELTA[piece.type]?.[newRot] ?? 0);
+  }
+  for (const kick of [0, -1, 1, -2, 2]) {
+    const tx = idealX + kick;
+    if (!collides(rotated, tx, piece.y)) {
+      piece.matrix = rotated;
+      piece.x = tx;
+      piece.rot = newRot;
+      return;
+    }
+  }
+}
+
+function collides(mat, ox, oy) {
+  for (let r = 0; r < mat.length; r++)
+    for (let c = 0; c < mat[r].length; c++)
+      if (mat[r][c]) {
+        const nx = ox+c, ny = oy+r;
+        if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+        if (ny >= 0 && board[ny][nx]) return true;
+      }
+  return false;
+}
+
+function numToColor(num) {
+  const palette = [
+    'hsl(30, 85%, 65%)',
+    'hsl(22, 90%, 44%)',
+    'hsl(14, 88%, 27%)',
+    'hsl(6,  80%, 15%)',
+  ];
+  return palette[(num-1) % 4];
+}
+
+function numTextColor(num) {
+  return num === 1 ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.92)';
+}
+
+function findHangingBlocks() {
+  const grounded = new Set();
+  const queue = [];
+  for (let c = 0; c < COLS; c++) {
+    if (board[ROWS-1][c] !== null) {
+      const k = (ROWS-1)+','+c;
+      grounded.add(k); queue.push([ROWS-1, c]);
+    }
+  }
+  while (queue.length) {
+    const [r, c] = queue.shift();
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      const nr = r+dr, nc = c+dc;
+      if (nr>=0 && nr<ROWS && nc>=0 && nc<COLS && board[nr][nc]!==null) {
+        const k = nr+','+nc;
+        if (!grounded.has(k)) { grounded.add(k); queue.push([nr, nc]); }
+      }
+    }
+  }
+  const hanging = [];
+  for (let r=0; r<ROWS; r++)
+    for (let c=0; c<COLS; c++)
+      if (board[r][c]!==null && !grounded.has(r+','+c))
+        hanging.push({r, c});
+  return hanging;
+}
+
+function applyGravityUntilStable(onDone, gen) {
+  if (gen !== undefined && replayGen !== gen) return;
+  const hanging = findHangingBlocks();
+  if (!hanging.length) { onDone(); return; }
+  const fallers = [];
+  const claimed = new Set();
+  hanging.sort((a, b) => b.r - a.r);
+  for (const {r, c} of hanging) {
+    const nr = r+1, tk = nr+','+c;
+    if (nr < ROWS && board[nr][c] === null && !claimed.has(tk)) {
+      fallers.push({ col: c, fromRow: r, toRow: nr, num: board[r][c].num });
+      board[r][c] = null;
+      claimed.add(tk);
+    }
+  }
+  if (!fallers.length) { onDone(); return; }
+  fallingAnim = { blocks: fallers, startTime: performance.now() };
+  setTimeout(() => {
+    if (gen !== undefined && replayGen !== gen) return;
+    for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
+    fallingAnim = null;
+    setTimeout(() => applyGravityUntilStable(onDone, gen), animDelay(150));
+  }, animDelay(FALL_MS));
+}
+
+function applyColumnFall(zeroedCols, fullRow, onDone) {
+  if (!zeroedCols.length) { onDone(); return; }
+  const unique = [...new Set(zeroedCols)];
+  const fallers = [];
+  const claimed = new Set();
+  for (const col of unique) {
+    const row = fullRow - 1;
+    if (row >= 0 && board[row][col] !== null) {
+      const tk = fullRow + ',' + col;
+      if (!claimed.has(tk)) {
+        fallers.push({ col, fromRow: row, toRow: fullRow, num: board[row][col].num });
+        board[row][col] = null;
+        claimed.add(tk);
+      }
+    }
+  }
+  if (supportModel === 'cluster' && fallers.length) {
+    const fallerSet = new Set(fallers.map(f => f.fromRow + ',' + f.col));
+    const stack = [...fallers];
+    while (stack.length) {
+      const f = stack.pop();
+      const vertNew = [], horizNew = [];
+      for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+        const nr = f.fromRow + dr, nc = f.col + dc;
+        if (nr < 0 || nr >= fullRow || nc < 0 || nc >= COLS) continue;
+        if (fallerSet.has(nr + ',' + nc)) continue;
+        if (board[nr][nc] === null) continue;
+        let selfGrounded = true;
+        for (let gr = nr+1; gr < ROWS; gr++) {
+          if (board[gr][nc] === null) { selfGrounded = false; break; }
+        }
+        if (selfGrounded) continue;
+        const destRow = nr + 1;
+        if (destRow > fullRow) continue;
+        if (board[destRow][nc] !== null) continue;
+        const tk = destRow + ',' + nc;
+        if (claimed.has(tk)) continue;
+        const entry = { col: nc, fromRow: nr, toRow: destRow, num: board[nr][nc].num };
+        fallers.push(entry);
+        board[nr][nc] = null;
+        claimed.add(tk);
+        fallerSet.add(nr + ',' + nc);
+        if (dc === 0) vertNew.push(entry); else horizNew.push(entry);
+      }
+      stack.push(...horizNew);
+      stack.push(...vertNew);
+    }
+  }
+  if (!fallers.length) { onDone(); return; }
+  fallingAnim = { blocks: fallers, startTime: performance.now() };
+  setTimeout(() => {
+    for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
+    fallingAnim = null;
+    setTimeout(onDone, animDelay(150));
+  }, animDelay(FALL_MS));
+}
+
+// ── Rendering ──
+function drawBoardBlock(num, x, y, size, ghost) {
+  if (ghost) {
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.fillRect(x*size, y*size, size, size);
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeRect(x*size+0.5, y*size+0.5, size-1, size-1);
+    return;
+  }
+  ctx.fillStyle = numToColor(num);
+  ctx.fillRect(x*size+1, y*size+1, size-2, size-2);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fillRect(x*size+1, y*size+1, size-2, 4);
+  ctx.fillRect(x*size+1, y*size+1, 4, size-2);
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(x*size+size-4, y*size+1, 3, size-2);
+  ctx.fillRect(x*size+1, y*size+size-4, size-2, 3);
+  if (numLevel > 1) {
+    ctx.fillStyle = numTextColor(num);
+    ctx.font = `bold ${size*0.6}px Courier New`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(num, x*size+size/2, y*size+size/2+1);
+  }
+}
+
+function drawPreviewBlock(c, num, x, y, nb) {
+  c.fillStyle = numToColor(num);
+  c.fillRect(x+1, y+1, nb-2, nb-2);
+  c.fillStyle = 'rgba(255,255,255,0.25)';
+  c.fillRect(x+1, y+1, nb-2, 4);
+  c.fillRect(x+1, y+1, 4, nb-2);
+  if (numLevel > 1) {
+    c.fillStyle = numTextColor(num);
+    c.font = `bold ${nb*0.6}px Courier New`;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(num, x+nb/2, y+nb/2+1);
+  }
+}
+
+function drawPreview(mat) {
+  const nb = BLOCK, cw = nextCanvas.width, ch = nextCanvas.height;
+  nextCtx.fillStyle = '#040c18';
+  nextCtx.fillRect(0, 0, cw, ch);
+  if (!mat) return;
+  let minR = mat.length, maxR = -1, minC = mat[0].length, maxC = -1;
+  for (let r = 0; r < mat.length; r++)
+    for (let c = 0; c < mat[r].length; c++)
+      if (mat[r][c]) {
+        if (r < minR) minR = r; if (r > maxR) maxR = r;
+        if (c < minC) minC = c; if (c > maxC) maxC = c;
+      }
+  if (maxR < 0) return;
+  const ox = (cw - (maxC-minC+1)*nb) / 2 - minC*nb;
+  const oy = (ch - (maxR-minR+1)*nb) / 2 - minR*nb;
+  for (let r = 0; r < mat.length; r++)
+    for (let c = 0; c < mat[r].length; c++)
+      if (mat[r][c])
+        drawPreviewBlock(nextCtx, mat[r][c], ox+c*nb, oy+r*nb, nb);
+}
+
+function draw() {
+  ctx.fillStyle = '#071020';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Board cells
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (board[r][c]) drawBoardBlock(board[r][c].num, c, r, BLOCK, false);
+
+  // Row-clear highlight
+  for (const row of (clearingRows || [])) {
+    ctx.fillStyle = 'rgba(255,220,100,0.3)';
+    ctx.fillRect(0, row*BLOCK, COLS*BLOCK, BLOCK);
+  }
+
+  // Subtracting animation
+  const now = performance.now();
+  if (subtractingAnim) {
+    const t = Math.min(1, (now - subtractingAnim.startTime) / Math.max(1, animDuration(CLEAR_MS)));
+    for (const b of subtractingAnim.blocks) {
+      const numDisp = b.toNum + (b.fromNum - b.toNum) * (1 - t);
+      drawBoardBlock(Math.max(1, Math.round(numDisp)), b.col, b.row, BLOCK, false);
+    }
+  }
+
+  // Falling animation
+  if (fallingAnim) {
+    const t = Math.min(1, (now - fallingAnim.startTime) / Math.max(1, animDuration(FALL_MS)));
+    const eased = 1 - Math.pow(1-t, 2);
+    for (const fb of fallingAnim.blocks)
+      drawBoardBlock(fb.num, fb.col, fb.fromRow + eased, BLOCK, false);
+  }
+
+  // Ghost
+  if (piece && !clearing) {
+    let gy = piece.y;
+    while (!collides(piece.matrix, piece.x, gy+1)) gy++;
+    if (gy !== piece.y)
+      for (let r = 0; r < piece.matrix.length; r++)
+        for (let c = 0; c < piece.matrix[r].length; c++)
+          if (piece.matrix[r][c])
+            drawBoardBlock(null, piece.x+c, gy+r, BLOCK, true);
+  }
+
+  // Active piece
+  if (piece)
+    for (let r = 0; r < piece.matrix.length; r++)
+      for (let c = 0; c < piece.matrix[r].length; c++)
+        if (piece.matrix[r][c])
+          drawBoardBlock(piece.matrix[r][c], piece.x+c, piece.y+r, BLOCK, false);
+
+  // Score popups
+  const POPUP_MS = 800;
+  scorePopups = scorePopups.filter(p => now - p.startTime < POPUP_MS);
+  for (const p of scorePopups) {
+    const t = (now - p.startTime) / POPUP_MS;
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.font = 'bold 14px Courier New';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffe080';
+    ctx.fillText(p.text, p.x, p.y - t*40);
+    ctx.restore();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+// ── Replay engine ──
+function reconstructPiece(entry) {
+  const tmpl = TEMPLATES[entry.piece];
+  let i = 0;
+  const matrix = tmpl.map(row => row.map(v => v ? entry.nums[i++] : 0));
+  return {
+    type: entry.piece, matrix, rot: 0,
+    x: Math.floor(COLS/2) - Math.ceil(tmpl[0].length/2),
+    y: 0,
+  };
+}
+
+function applyReplayMove(move) {
+  if      (move === 'L' && !collides(piece.matrix, piece.x-1, piece.y)) piece.x--;
+  else if (move === 'R' && !collides(piece.matrix, piece.x+1, piece.y)) piece.x++;
+  else if (move === 'U') rotatePiece();
+  else if (move === 'D' && !collides(piece.matrix, piece.x, piece.y+1)) piece.y++;
+}
+
+// Play moves one at a time, then callback
+function playMoves(moves, idx, gen, onDone) {
+  if (replayGen !== gen) return;
+  if (replayPaused) { setTimeout(() => playMoves(moves, idx, gen, onDone), 80); return; }
+  if (idx >= moves.length) { onDone(); return; }
+  applyReplayMove(moves[idx]);
+  setTimeout(() => playMoves(moves, idx+1, gen, onDone), moveDelay());
+}
+
+// Drop piece row-by-row until it lands, then callback
+function animateDrop(gen, onDone) {
+  if (replayGen !== gen) return;
+  if (replayPaused) { setTimeout(() => animateDrop(gen, onDone), 80); return; }
+  if (!collides(piece.matrix, piece.x, piece.y+1)) {
+    piece.y++;
+    setTimeout(() => animateDrop(gen, onDone), dropDelay());
+  } else {
+    onDone();
+  }
+}
+
+// Lock piece onto board, run clearing chain, call onDone when board is settled
+function lockAndClear(gen, onDone) {
+  if (replayGen !== gen) return;
+
+  // Place piece on board
+  for (let r = 0; r < piece.matrix.length; r++)
+    for (let c = 0; c < piece.matrix[r].length; c++)
+      if (piece.matrix[r][c]) {
+        const ny = piece.y + r;
+        if (ny < 0) { onDone(); return; } // topped out
+        board[ny][piece.x + c] = { num: piece.matrix[r][c] };
+      }
+
+  clearing = true;
+  piece = null;
+  let cleared = 0, earnedScore = 0;
+
+  function step(startRow, chainDepth) {
+    if (replayGen !== gen) return;
+    let fullRow = -1;
+    for (let r = startRow; r < ROWS; r++) {
+      if (board[r].every(cell => cell !== null)) { fullRow = r; break; }
+    }
+    if (fullRow === -1) {
+      applyGravityUntilStable(() => {
+        if (replayGen !== gen) return;
+        clearing = false;
+        clearingRows = [];
+        if (cleared) {
+          lines += cleared;
+          score += earnedScore;
+          const prevLevel = level;
+          level = Math.floor(lines / 10) + 1;
+          updateUI();
+        }
+        onDone();
+      }, gen);
+      return;
+    }
+    cleared++;
+    clearingRows = [fullRow];
+    setTimeout(() => {
+      if (replayGen !== gen) return;
+      const minNum = Math.min(...board[fullRow].map(c => c.num));
+      const subtractBlocks = [], zeroedCols = [];
+      for (let c = 0; c < COLS; c++) {
+        const fromNum = board[fullRow][c].num;
+        board[fullRow][c].num -= minNum;
+        if (board[fullRow][c].num <= 0) {
+          subtractBlocks.push({ row: fullRow, col: c, fromNum, toNum: 0 });
+          board[fullRow][c] = null;
+          zeroedCols.push(c);
+        } else {
+          subtractBlocks.push({ row: fullRow, col: c, fromNum, toNum: board[fullRow][c].num });
+        }
+      }
+      clearingRows = [];
+      subtractingAnim = { blocks: subtractBlocks, startTime: performance.now() };
+      const chainMult = Math.pow(1.5, chainDepth);
+      const pts = Math.round(100 * level * Math.pow(minNum, 1.5) * chainMult);
+      earnedScore += pts;
+      scorePopups.push({
+        x: COLS*BLOCK/2, y: fullRow*BLOCK,
+        text: chainDepth > 0 ? `+${pts} ×${chainDepth+1}` : `+${pts}`,
+        startTime: performance.now(),
+      });
+      setTimeout(() => {
+        if (replayGen !== gen) return;
+        subtractingAnim = null;
+        applyColumnFall(zeroedCols, fullRow, () => {
+          if (replayGen !== gen) return;
+          const nextStart = board[fullRow].every(c => c !== null) ? fullRow : fullRow + 1;
+          step(nextStart, chainDepth + 1);
+        });
+      }, animDelay(CLEAR_MS));
+    }, animDelay(CLEAR_MS));
+  }
+  step(0, 0);
+}
+
+// Main replay loop: play one piece at a time
+function playEntry(gen) {
+  if (replayGen !== gen) return;
+  if (replayIdx >= replayEntries.length) {
+    // Done
+    replayPlaying = false;
+    document.getElementById('play-btn').textContent = '▶ PLAY';
+    document.getElementById('status-msg').textContent = 'Replay complete';
+    document.getElementById('status-msg').style.display = 'flex';
+    updateProgress();
+    return;
+  }
+
+  const entry = replayEntries[replayIdx++];
+  piece = reconstructPiece(entry);
+  updateUI();
+  updateProgress();
+
+  // Show next piece preview (look ahead)
+  if (replayIdx < replayEntries.length) {
+    drawPreview(reconstructPiece(replayEntries[replayIdx]).matrix);
+  } else {
+    drawPreview(null);
+  }
+
+  // Play recorded moves, drop, lock, then next piece
+  playMoves(entry.moves, 0, gen, () => {
+    animateDrop(gen, () => {
+      lockAndClear(gen, () => {
+        // Brief pause between pieces so the board is visible after clearing
+        setTimeout(() => playEntry(gen), animDelay(200));
+      });
+    });
+  });
+}
+
+function startReplay() {
+  if (!replayEntries.length) return;
+  replayGen++;
+  const gen = replayGen;
+  board = newBoard();
+  score = 0; level = 1; lines = 0;
+  clearing = false; clearingRows = [];
+  fallingAnim = null; subtractingAnim = null;
+  scorePopups = [];
+  replayIdx = 0;
+  replayPlaying = true;
+  replayPaused = false;
+  piece = null;
+  document.getElementById('play-btn').textContent = '⏸ PAUSE';
+  document.getElementById('restart-btn').disabled = false;
+  document.getElementById('status-msg').style.display = 'none';
+  updateUI();
+  playEntry(gen);
+}
+
+function togglePause() {
+  if (!replayPlaying) return;
+  replayPaused = !replayPaused;
+  document.getElementById('play-btn').textContent = replayPaused ? '▶ PLAY' : '⏸ PAUSE';
+}
+
+// ── UI ──
+function updateUI() {
+  document.getElementById('cur-score').textContent = score;
+  document.getElementById('cur-level').textContent = level;
+  document.getElementById('cur-lines').textContent = lines;
+  document.getElementById('cur-piece-type').textContent = piece ? piece.type : '—';
+}
+
+function updateProgress() {
+  const total = replayEntries.length;
+  const done = replayIdx;
+  document.getElementById('piece-progress').textContent = `${done} / ${total}`;
+  const pct = total ? (done / total * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function loadReplay(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines_raw = e.target.result.trim().split('\n');
+    try {
+      const parsed = lines_raw.map(l => JSON.parse(l));
+      if (!parsed[0].format || !parsed[0].format.startsWith('subtetris-replay')) {
+        alert('Not a valid Subtetris replay file.');
+        return;
+      }
+      replayHeader = parsed[0];
+      replayEntries = parsed.slice(1);
+
+      // Apply settings from file
+      numLevel = replayHeader.meta.max || 4;
+
+      // Show metadata
+      const meta = replayHeader.meta;
+      const d = meta.date ? new Date(meta.date).toLocaleString() : '—';
+      document.getElementById('meta-date').textContent = d.split(',')[0]; // date only
+      document.getElementById('meta-max').textContent = meta.max ?? '—';
+      document.getElementById('meta-pieces').textContent = replayEntries.length;
+      document.getElementById('meta-score').textContent = meta.score ?? '—';
+      document.getElementById('meta-panel').style.display = 'block';
+
+      // Reset display
+      board = newBoard();
+      piece = null;
+      score = 0; level = 1; lines = 0;
+      clearing = false; clearingRows = []; fallingAnim = null; subtractingAnim = null; scorePopups = [];
+      drawPreview(null);
+      updateUI();
+      updateProgress();
+
+      // Enable play
+      document.getElementById('play-btn').disabled = false;
+      document.getElementById('play-btn').textContent = '▶ PLAY';
+      document.getElementById('status-msg').textContent = `${replayEntries.length} pieces loaded — press Play`;
+      document.getElementById('status-msg').style.display = 'flex';
+
+    } catch (err) {
+      alert('Failed to parse replay file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Event wiring ──
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) loadReplay(e.target.files[0]);
+  e.target.value = '';
+});
+
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) loadReplay(f);
+});
+
+document.getElementById('play-btn').addEventListener('click', () => {
+  if (!replayEntries.length) return;
+  if (!replayPlaying) {
+    startReplay();
+  } else {
+    togglePause();
+  }
+});
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  if (!replayEntries.length) return;
+  startReplay();
+});
+
+document.querySelectorAll('.spd-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.spd-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    speedMult = parseFloat(btn.dataset.spd);
+  });
+});
+
+// Space = pause/resume
+document.addEventListener('keydown', e => {
+  if (e.key === ' ') { e.preventDefault(); togglePause(); }
+});
+
+// ── Boot ──
+board = newBoard();
+clearing = false; clearingRows = []; score = 0; level = 1; lines = 0;
+drawPreview(null);
+updateUI();
+updateProgress();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
