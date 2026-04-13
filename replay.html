@@ -847,7 +847,11 @@ document.querySelectorAll('.spd-btn').forEach(btn => {
 
 // Space = pause/resume
 document.addEventListener('keydown', e => {
-  if (e.key === ' ') { e.preventDefault(); togglePause(); }
+  if (e.key === ' ' || e.key === 'Enter' || e.key === 'p' || e.key === 'P') {
+    e.preventDefault();
+    if (!replayEntries.length) return;
+    if (!replayPlaying) startReplay(); else togglePause();
+  }
 });
 
 // ── Boot ──
