@@ -686,7 +686,7 @@ function lockAndClear(gen, onDone) {
         subtractingAnim = null;
         applyColumnFall(zeroedCols, fullRow, () => {
           if (replayGen !== gen) return;
-          const nextStart = board[fullRow].every(c => c !== null) ? fullRow : fullRow + 1;
+          const nextStart = board[fullRow].every(c => c !== null) ? fullRow : 0;
           step(nextStart, chainDepth + 1);
         });
       }, animDelay(CLEAR_MS));
@@ -903,7 +903,7 @@ function syncStepClear() {
     }
     earnedScore += Math.round(100 * level * Math.pow(minNum, 1.5) * Math.pow(1.5, chainDepth));
     syncApplyColumnFall(zeroedCols, fullRow);
-    const nextStart = board[fullRow].every(c => c !== null) ? fullRow : fullRow + 1;
+    const nextStart = board[fullRow].every(c => c !== null) ? fullRow : 0;
     doStep(nextStart, chainDepth + 1);
   }
   doStep(0, 0);
