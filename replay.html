@@ -150,7 +150,7 @@
   <div id="sidebar">
     <div class="panel" id="title-panel">
       <span class="name-sub">SUB</span><span class="name-rest">TETRIS</span>
-      <span class="replay-label">REPLAY v1.0</span>
+      <span class="replay-label">REPLAY v1.1</span>
     </div>
 
     <div class="panel" id="file-panel">
@@ -379,15 +379,14 @@ function applyGravityUntilStable(onDone, gen) {
   }
   if (!fallers.length) { onDone(); return; }
   fallingAnim = { blocks: fallers, startTime: performance.now() };
-  setTimeout(() => {
-    if (gen !== undefined && replayGen !== gen) return;
+  pauseAware(gen, animDelay(FALL_MS), () => {
     for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
     fallingAnim = null;
-    setTimeout(() => applyGravityUntilStable(onDone, gen), animDelay(150));
-  }, animDelay(FALL_MS));
+    pauseAware(gen, animDelay(150), () => applyGravityUntilStable(onDone, gen));
+  });
 }
 
-function applyColumnFall(zeroedCols, fullRow, onDone) {
+function applyColumnFall(zeroedCols, fullRow, onDone, gen) {
   if (!zeroedCols.length) { onDone(); return; }
   const unique = [...new Set(zeroedCols)];
   const fallers = [];
@@ -437,11 +436,11 @@ function applyColumnFall(zeroedCols, fullRow, onDone) {
   }
   if (!fallers.length) { onDone(); return; }
   fallingAnim = { blocks: fallers, startTime: performance.now() };
-  setTimeout(() => {
+  pauseAware(gen, animDelay(FALL_MS), () => {
     for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
     fallingAnim = null;
-    setTimeout(onDone, animDelay(150));
-  }, animDelay(FALL_MS));
+    pauseAware(gen, animDelay(150), onDone);
+  });
 }
 
 // ── Rendering ──
@@ -594,6 +593,16 @@ function applyReplayMove(move) {
   else if (move === 'D' && !collides(piece.matrix, piece.x, piece.y+1)) piece.y++;
 }
 
+// Schedule fn after delay, but poll while paused instead of firing
+function pauseAware(gen, delay, fn) {
+  const run = () => {
+    if (replayGen !== gen) return;
+    if (replayPaused) { setTimeout(run, 80); return; }
+    fn();
+  };
+  setTimeout(run, delay);
+}
+
 // Play moves one at a time, then callback
 function playMoves(moves, idx, gen, onDone) {
   if (replayGen !== gen) return;
@@ -656,8 +665,7 @@ function lockAndClear(gen, onDone) {
     }
     cleared++;
     clearingRows = [fullRow];
-    setTimeout(() => {
-      if (replayGen !== gen) return;
+    pauseAware(gen, animDelay(CLEAR_MS), () => {
       const minNum = Math.min(...board[fullRow].map(c => c.num));
       const subtractBlocks = [], zeroedCols = [];
       for (let c = 0; c < COLS; c++) {
@@ -681,16 +689,15 @@ function lockAndClear(gen, onDone) {
         text: chainDepth > 0 ? `+${pts} ×${chainDepth+1}` : `+${pts}`,
         startTime: performance.now(),
       });
-      setTimeout(() => {
-        if (replayGen !== gen) return;
+      pauseAware(gen, animDelay(CLEAR_MS), () => {
         subtractingAnim = null;
         applyColumnFall(zeroedCols, fullRow, () => {
           if (replayGen !== gen) return;
           const nextStart = board[fullRow].every(c => c !== null) ? fullRow : 0;
           step(nextStart, chainDepth + 1);
-        });
-      }, animDelay(CLEAR_MS));
-    }, animDelay(CLEAR_MS));
+        }, gen);
+      });
+    });
   }
   step(0, 0);
 }
