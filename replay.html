@@ -150,7 +150,7 @@
   <div id="sidebar">
     <div class="panel" id="title-panel">
       <span class="name-sub">SUB</span><span class="name-rest">TETRIS</span>
-      <span class="replay-label">REPLAY</span>
+      <span class="replay-label">REPLAY v1.0</span>
     </div>
 
     <div class="panel" id="file-panel">
@@ -162,7 +162,9 @@
     </div>
 
     <div class="panel" id="meta-panel">
+      <div class="meta-row">Game ver <span id="meta-version">—</span></div>
       <div class="meta-row">Date <span id="meta-date">—</span></div>
+      <div class="meta-row">Time <span id="meta-time">—</span></div>
       <div class="meta-row">MAX # <span id="meta-max">—</span></div>
       <div class="meta-row">Pieces <span id="meta-pieces">—</span></div>
       <div class="meta-row">Score <span id="meta-score">—</span></div>
@@ -256,6 +258,7 @@ let replayGen = 0;
 let replayPlaying = false;
 let replayPaused = false;
 let speedMult = 1; // 0=instant, 0.5, 1, 2
+let replayCurrentT = null; // t field of the currently-playing piece (ms from game start)
 
 // ── Canvas ──
 const canvas = document.getElementById('canvas');
@@ -707,6 +710,7 @@ function playEntry(gen) {
 
   const entry = replayEntries[replayIdx++];
   piece = reconstructPiece(entry);
+  replayCurrentT = entry.t ?? null;
   updateUI();
   updateProgress();
 
@@ -738,6 +742,7 @@ function startReplay() {
   fallingAnim = null; subtractingAnim = null;
   scorePopups = [];
   replayIdx = 0;
+  replayCurrentT = null;
   replayPlaying = true;
   replayPaused = false;
   piece = null;
@@ -755,6 +760,15 @@ function togglePause() {
 }
 
 // ── UI ──
+function formatElapsed(ms) {
+  if (ms == null) return '—';
+  const totalS = Math.floor(ms / 1000);
+  const m = Math.floor(totalS / 60);
+  const s = totalS % 60;
+  const tenths = Math.floor((ms % 1000) / 100);
+  return `${m}:${String(s).padStart(2, '0')}.${tenths}`;
+}
+
 function updateUI() {
   document.getElementById('cur-score').textContent = score;
   document.getElementById('cur-level').textContent = level;
@@ -903,7 +917,7 @@ function seekToIndex(targetIdx) {
   const gen = replayGen;
   replayPlaying = false; replayPaused = false;
   clearing = false; clearingRows = []; fallingAnim = null; subtractingAnim = null; scorePopups = [];
-  piece = null;
+  piece = null; replayCurrentT = null;
 
   // Sync-simulate board state up to targetIdx
   board = newBoard();
@@ -939,9 +953,9 @@ function seekToIndex(targetIdx) {
 function updateProgress() {
   const total = replayEntries.length;
   const done = replayIdx;
-  const label = total ? `piece ${done} / ${total}` : '— / —';
   document.getElementById('piece-progress').textContent = `${done} / ${total}`;
-  document.getElementById('progress-label').textContent = label;
+  const elapsed = replayCurrentT != null ? `  ${formatElapsed(replayCurrentT)}` : '';
+  document.getElementById('progress-label').textContent = total ? `${done} / ${total}${elapsed}` : '— / —';
   const pct = total ? (done / total * 100) : 0;
   document.getElementById('progress-fill').style.width = pct + '%';
 }
@@ -964,8 +978,10 @@ function loadReplay(file) {
 
       // Show metadata
       const meta = replayHeader.meta;
-      const d = meta.date ? new Date(meta.date).toLocaleString() : '—';
-      document.getElementById('meta-date').textContent = d.split(',')[0]; // date only
+      const dt = meta.date ? new Date(meta.date) : null;
+      document.getElementById('meta-version').textContent = meta.version ?? '—';
+      document.getElementById('meta-date').textContent = dt ? dt.toLocaleDateString() : '—';
+      document.getElementById('meta-time').textContent = dt ? dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '—';
       document.getElementById('meta-max').textContent = meta.max ?? '—';
       document.getElementById('meta-pieces').textContent = replayEntries.length;
       document.getElementById('meta-score').textContent = meta.score ?? '—';
