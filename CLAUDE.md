@@ -39,7 +39,7 @@ After cells vanish, blocks above fall to fill gaps. The process repeats until no
 2. **Expand to neighbors** — determine all co-falling blocks before moving anything. Uses **`cluster` mode** (fixed):
    - A block falls if adjacent (4-directional) to any block already falling, unless it is self-grounded (unbroken stack in its own column from its row to the floor). Propagate via column-first DFS — exhaust upward within the column before expanding sideways.
 3. **Move** — all decided blocks fall exactly 1 row simultaneously
-4. **Re-check** — if the same row is now full again, repeat from step 1 (chain; bonus score). Otherwise advance downward and continue scanning.
+4. **Re-check** — if the same row is now full again, repeat from step 1 (chain; bonus score). Otherwise **restart scanning from row 0** — cascade may have filled rows above the cleared row, so scanning must not advance past them.
 5. **Final settle** — after no more full rows remain, one BFS pass drops any residual floating blocks (ground-mode safety net)
 
 ---
