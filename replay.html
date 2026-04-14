@@ -1051,6 +1051,14 @@ document.addEventListener('keydown', e => {
     if (!replayEntries.length) return;
     if (!replayPlaying) startReplay(); else togglePause();
   }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (!replayEntries.length) return;
+    const step = (e.metaKey || e.ctrlKey || e.altKey) ? 10 : 1;
+    // replayIdx is already 1 ahead of the currently-playing piece (incremented at playEntry start)
+    const current = replayIdx - 1;
+    seekToIndex(current + (e.key === 'ArrowRight' ? step : -step));
+  }
 });
 
 // ── Boot ──
