@@ -288,7 +288,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.127</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.128</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -312,7 +312,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.127</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.128</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -344,6 +344,7 @@
       </div>
     </div>
     <button onclick="startGame()" style="background:#7a3510;border:2px solid #c87941;border-top:none;border-radius:0 0 0 0;color:#ffd0a0;padding:11px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:3px;width:100%;font-weight:bold;transition:background 0.15s;" onmouseover="this.style.background='#a04818'" onmouseout="this.style.background='#7a3510'">NEW GAME</button>
+    <button id="pause-btn" onclick="togglePause()" style="background:#1a3a6a;border:2px solid #2a5498;border-top:none;color:#aac;padding:8px;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;letter-spacing:2px;width:100%;transition:background 0.15s;">PAUSE</button>
     <button id="replay-btn" onclick="downloadReplay()" style="background:#071020;border:2px solid #1e3a5f;border-top:none;border-radius:0 0 6px 6px;color:#778;padding:6px;font-family:'Courier New',monospace;font-size:10px;cursor:pointer;letter-spacing:2px;width:100%;transition:background 0.15s;" onmouseover="this.style.background='#0d1f3c'" onmouseout="this.style.background='#071020'">SAVE REPLAY</button>
     <div class="panel" style="flex: 2; font-size:10px; color:#aaa; line-height:1.6; justify-content: flex-start;">
       <h3>Controls</h3>
@@ -554,7 +555,7 @@ function replayLock() {
 }
 function downloadReplay() {
   if (!replayLog.length) return;
-  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.127', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.128', max: numLevel, date: new Date().toISOString(), score, level, lines } };
   const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
   const blob = new Blob([text], { type: 'application/jsonl' });
   const url = URL.createObjectURL(blob);
@@ -1124,7 +1125,7 @@ function setButtonsGrayed(ids, grayed) {
 function updateButtons() {
   const inactive = gameOver || paused;
   setButtonsGrayed(['tc-left','tc-right','tc-rot','tc-drop'], inactive);
-  setButtonsGrayed(['tc-pause'], gameOver);
+  setButtonsGrayed(['tc-pause', 'pause-btn'], gameOver);
 }
 
 function endGame() {
@@ -1198,6 +1199,13 @@ function togglePause() {
     document.getElementById('message').style.display = 'block';
   } else {
     document.getElementById('message').style.display = 'none';
+  }
+  const pb = document.getElementById('pause-btn');
+  if (pb) {
+    pb.textContent    = paused ? 'RESUME' : 'PAUSE';
+    pb.style.background  = paused ? '#7a3510' : '#1a3a6a';
+    pb.style.borderColor = paused ? '#c87941' : '#2a5498';
+    pb.style.color       = paused ? '#ffd0a0' : '#aac';
   }
   updateButtons();
 }

@@ -69,11 +69,11 @@ Timing scales with **animation speed** setting (`animSpeed`):
 
 - **Background:** navy blue (`#0a1628`)
 - **Panels/UI:** dark navy (`#0d1f3c`), borders `#1e3a5f`
-- **Block colors by number:**
-  - 1: light burnt orange `hsl(22, 85%, 62%)` — dark text
-  - 2: dark burnt orange `hsl(22, 85%, 34%)` — light text
-  - 3: steel blue `hsl(195, 75%, 42%)` — light text
-  - 4: forest green `hsl(145, 60%, 36%)` — light text
+- **Block colors by number** (all in the orange→red spectrum, darkening with value):
+  - 1: `hsl(30, 85%, 65%)` light orange — dark text `rgba(0,0,0,0.75)`
+  - 2: `hsl(22, 90%, 44%)` burnt orange — light text `rgba(255,255,255,0.92)`
+  - 3: `hsl(14, 88%, 27%)` dark reddish-brown — light text
+  - 4: `hsl(6, 80%, 15%)` near-black red — light text
 - Numbers drawn on blocks (hidden when MAX=1 — plays like classic Tetris visually)
 - Blocks have a highlight bevel (top/left lighter, bottom/right darker)
 - Row-clearing highlight: yellow overlay `rgba(255, 220, 100, 0.3)` on the target row
@@ -83,14 +83,16 @@ Timing scales with **animation speed** setting (`animSpeed`):
 
 ## Desktop Layout
 
-Sidebar (130px wide, same height as board):
+Sidebar (130px wide, height matches canvas — 600px default, 663px when sum bar shown; set dynamically by `setSumBar`):
 - Title "SUBTETRIS" (font-size 16px, letter-spacing 2px) + version below
 - Score — DSEG7 20px, dual-layer display (record in navy, current in orange); expands beyond 5 digits dynamically
 - Level + Lines (side by side) — same dual-layer digit display; Level min 2 digits, Lines min 3 digits
 - Next piece preview canvas (120×90, `flex: none`) — blocks drawn at BLOCK px size
 - **MAX #** — single cycling button, always active (burnt orange), label "MAX n", cycles 4→3→2→1→4
 - **Anim speed** selector: 2 buttons `[ON][OFF]` — active one highlighted burnt orange; ON = 175ms per phase, OFF = instant
-- NEW GAME button (rounded bottom corners, burnt orange style)
+- NEW GAME button (burnt orange style)
+- **PAUSE button** (`#pause-btn`) below NEW GAME — navy blue (`#1a3a6a`/`#2a5498`) at rest; switches to burnt orange and label "RESUME" while paused; grayed out (opacity 0.35, no pointer events) when game over. Calls `togglePause()`.
+- **SAVE REPLAY button** (`#replay-btn`) below PAUSE — subtle dark style (`#071020`, `#1e3a5f`), rounded bottom corners. Calls `downloadReplay()`; no-ops if `replayLog` is empty.
 - Controls cheatsheet (font-size 10px, line-height 1.6, `flex: 2`)
 - Bottom row: `[SUM][🔊]` side by side — `#sum-btn` (left half) toggles sum bar; `#snd-btn` (right half) toggles sound. SUM is lit (`#0d1f3c` bg, `#7ab8d4` text) when active, dim (`#071020`, `#556`) when off.
 
@@ -203,14 +205,15 @@ No x-delta needed — `idealX = piece.x` is correct for all their rotation state
 - `renderScoreDigits(elId, cur, rec, minPad=5)` — dual-layer digit display (record in navy `#1e3a5c`, current in orange `#d4863c`); digit count = max(cur digits, rec digits, minPad); used for score (minPad=5), level (minPad=2), lines (minPad=3)
 - Support model is fixed to `cluster`: `const supportModel = 'cluster'` — no UI controls
 - Single HTML file, no dependencies
-- Canvas scaled by CSS on mobile (buffer stays 300×600, CSS fills available height)
+- Canvas scaled by CSS on mobile (buffer is 300×600 when sum bar hidden, 300×663 when shown; CSS `height: 100%; width: auto` preserves the aspect ratio either way)
 - **Preview piece uses the same block size as the board** (pass `BLOCK` as `nb` to `drawPreview`); preview canvas is 120×90 to accommodate all piece shapes
-- **Blocks must always be square**: canvas CSS must use `height: 100%; width: auto; max-width: 100%` to preserve the 1:2 (width:height) aspect ratio — never `width: 100%; height: 100%` which stretches independently
+- **Blocks must always be square**: canvas CSS must use `height: 100%; width: auto; max-width: 100%` — never `width: 100%; height: 100%` which stretches independently
 - `requestAnimationFrame` game loop
 - Async clearing chain via `setTimeout` (no blocking)
-- `cascadeFall()` moves only one row at a time per wave, repeats until settled
+- `applyColumnFall(zeroedCols, fullRow, onDone, gen)` — cluster-mode cascade for one cleared row; `applyGravityUntilStable(onDone, gen)` — BFS final-settle pass after all rows processed. Both move one row at a time per wave and repeat until settled.
+- **Replay recording** — every game is silently recorded. `replaySpawn(p)` logs each piece at spawn; `replayLock()` appends `{t, piece, nums, moves, rot, col}` to `replayLog` on lock. `downloadReplay()` serialises `replayLog` as a `.jsonl` file (one JSON object per line: header + one entry per piece) and triggers a browser download. Format: `subtetris-replay/v1`. Played back in `replay.html`.
 - **`gameGen` counter** — incremented by `startGame()`; every `setTimeout` callback in `lock()`/`step()`/`applyGravityUntilStable()` captures `myGen = gameGen` at call time and returns early if `gameGen !== myGen`. Prevents stale callbacks from overwriting the new game's state or calling `endGame()` after NEW is pressed mid-clearing-chain
-- **Always bump the patch version** (in HTML title, sidebar, and mobile header) on every turn that makes any code change to `index.html` — do this as the final step of that turn
+- **Always bump the patch version** (in sidebar and mobile header — the `<title>` tag has no version) on every turn that makes any code change to `index.html` — do this as the final step of that turn
 - **Always update CLAUDE.md** in the same turn as any change that affects game mechanics, UI, layout, or architecture — keep it the source of truth
 - Serve via `python3 -m http.server 3456`
 
