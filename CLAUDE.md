@@ -89,19 +89,21 @@ Sidebar (130px wide, same height as board):
 - Level + Lines (side by side) — same dual-layer digit display; Level min 2 digits, Lines min 3 digits
 - Next piece preview canvas (120×90, `flex: none`) — blocks drawn at BLOCK px size
 - **MAX #** — single cycling button, always active (burnt orange), label "MAX n", cycles 4→3→2→1→4
-- **Anim speed** selector: 2 buttons `[ON][OFF]` — active one highlighted burnt orange; ON = 250ms per phase, OFF = instant
+- **Anim speed** selector: 2 buttons `[ON][OFF]` — active one highlighted burnt orange; ON = 175ms per phase, OFF = instant
 - NEW GAME button (rounded bottom corners, burnt orange style)
 - Controls cheatsheet (font-size 10px, line-height 1.6, `flex: 2`)
-- 🔊/🔇 sound toggle icon button at bottom
+- Bottom row: `[SUM][🔊]` side by side — `#sum-btn` (left half) toggles sum bar; `#snd-btn` (right half) toggles sound. SUM is lit (`#0d1f3c` bg, `#7ab8d4` text) when active, dim (`#071020`, `#556`) when off.
 
-Canvas: 300×630 (10 cols × 20 rows × 30px blocks + 30px sum bar row), border `#1e3a5f`.
+Canvas: 300×600 when sum bar hidden (default), 300×663 when shown. `boardTop` variable (0 or 33) offsets all board rendering; `showSumBar` boolean gates drawing and canvas resize. `setSumBar(bool)` updates both, resizes canvas/sidebar, and syncs button states.
 
-**Sum bar** — one block per column drawn in the 30px row immediately below the board:
-- Value: sum of all locked cell numbers in that column
+**Sum bar** — one block per column, mirrored above and below the board:
+- Value: sum of all locked cell numbers in that column (does not include the active falling piece)
 - Color: `hsl(215, 65%, L%)` where L = `55 - 51 * (sum / 80)` — 55% (sum=0, light steel-blue) → 4% (sum=80, near-black navy). Max possible sum = 20 rows × 4 MAX = 80.
 - Text: sum value shown when > 0; opacity scales with sum (`0.4 + 0.5 * t`) so heavier columns are more legible
-- Divider: 3px `#4a7ab8` bright line separating board from sum bar; sum bar cells start below it
-- Does not include the active falling piece; reflects locked board state only
+- Divider: 3px `#4a7ab8` bright line on the board-facing edge of each bar (bottom of top bar, top of bottom bar)
+- Top bar: cells at y=0..30, divider at y=30..33; Bottom bar: divider at y=633..636, cells at y=636..663
+- GAME OVER / PAUSE overlay `top` is set dynamically by `setSumBar`: `boardTop + 2` px (2px when hidden, 35px when shown)
+- **Sum Bar control** — desktop: `#sum-btn` (left half of bottom row, next to `#snd-btn`); mobile: `#mob-sum` in top bar next to `#mob-snd`. No button in the touch grid.
 
 ---
 
@@ -109,7 +111,7 @@ Canvas: 300×630 (10 cols × 20 rows × 30px blocks + 30px sum bar row), border 
 
 **Top bar (88px tall, fixed):**
 - Left: "SUBTETRIS" + version stacked, then Score | Lvl | Lines stats row below (dual-layer digit display, same as desktop)
-- Center-right: 🔊/🔇 sound toggle button (36×36px, `#1a3a6a`, id `mob-snd`)
+- Center-right: `#mob-sum` SUM toggle (36×36px, `#1a3a6a`/burnt-orange when active, id `mob-sum`) then `#mob-snd` 🔊/🔇 sound toggle (36×36px, `#1a3a6a`, id `mob-snd`) — both sit between the brand and the next preview
 - Right: NEXT piece preview canvas (96×72px CSS, 120×90 buffer)
 
 **Game board:**
@@ -124,7 +126,7 @@ Canvas: 300×630 (10 cols × 20 rows × 30px blocks + 30px sum bar row), border 
 **Bottom touch controls — 2×7 grid:**
 ```
 Row 1: [←][→][PAUSE][MAX][NEW][ANIM][↺]
-Row 2: [  ][  ][  ][    ][   ][    ][▼]
+Row 2: [  ][  ][    ][   ][   ][    ][▼]
 ```
 **Layout rules:**
 - `#touch-ctrl`: `display: grid; grid-template-columns: repeat(7, 50px); grid-template-rows: repeat(2, 50px); gap: 4px; justify-content: center`
@@ -132,6 +134,7 @@ Row 2: [  ][  ][  ][    ][   ][    ][▼]
 - ANIM (`tc-slo`) at `grid-column: 6; grid-row: 1` — toggles ON↔OFF; always navy blue; label "ANIM\nON" or "ANIM\nOFF"
 - Sound toggle moved to top bar (`mob-snd`)
 - MAX cycles 4→3→2→1→4, label "MAX n"; default MAX 4
+- **Row 2 columns 1–6 must remain empty (tc-blank).** Only `▼` at col 7 row 2 is used. The six left squares are reserved for a future ad banner — do not place any buttons there.
 
 **Button styles:**
 - `.tc-btn` (base): 50×50px, font-size 22px, **light navy blue** `#1a3a6a`, border `#2a5498`

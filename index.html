@@ -51,7 +51,7 @@
       flex-direction: column;
       gap: 0;
       width: 130px;
-      height: 630px;
+      height: 600px;
       overflow: hidden;
     }
     .panel {
@@ -288,20 +288,21 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.124</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.127</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
       <div class="mh-stat"><div class="mh-label">Lines</div><div class="mh-val" id="m-lines"></div></div>
     </div>
   </div>
+  <button id="mob-sum" onclick="setSumBar(!showSumBar)" style="width:36px;height:36px;background:#1a3a6a;border:1px solid #2a5498;color:#aac;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.5px;cursor:pointer;border-radius:4px;flex-shrink:0;">SUM</button>
   <button id="mob-snd" onclick="toggleSound()">🔊</button>
   <div id="mob-next-wrap"><canvas id="mob-next" width="120" height="90"></canvas></div>
 </div>
 <div id="game-container">
   <div id="board-area">
     <div id="board-wrap" style="position:relative;">
-      <canvas id="board" width="300" height="630"></canvas>
+      <canvas id="board" width="300" height="600"></canvas>
       <div id="message">
         <h2 id="msg-title">GAME OVER</h2>
         <p id="msg-sub">Enter or Space to restart</p>
@@ -311,7 +312,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.124</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.127</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -352,7 +353,10 @@
       spc/P pause<br>
       N new game
     </div>
-    <button id="snd-btn" onclick="toggleSound()" style="background:#071020;border:1px solid #1e3a5f;border-top:none;color:#aaa;padding:5px;font-size:18px;cursor:pointer;width:100%;transition:background 0.1s;">🔊</button>
+    <div style="display:flex;">
+      <button id="sum-btn" onclick="setSumBar(!showSumBar)" style="flex:1;background:#071020;border:1px solid #1e3a5f;border-top:none;border-right:none;color:#556;padding:5px;font-size:10px;font-family:'Courier New',monospace;letter-spacing:1px;cursor:pointer;transition:background 0.1s;">SUM</button>
+      <button id="snd-btn" onclick="toggleSound()" style="flex:1;background:#071020;border:1px solid #1e3a5f;border-top:none;color:#aaa;padding:5px;font-size:18px;cursor:pointer;transition:background 0.1s;">🔊</button>
+    </div>
   </div>
 </div>
 
@@ -379,6 +383,8 @@
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
+let boardTop = 0;    // 0 when sum bar hidden, 33 when shown (30px bar + 3px divider)
+let showSumBar = false;
 
 const TEMPLATES = {
   I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
@@ -548,7 +554,7 @@ function replayLock() {
 }
 function downloadReplay() {
   if (!replayLog.length) return;
-  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.124', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.127', max: numLevel, date: new Date().toISOString(), score, level, lines } };
   const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
   const blob = new Blob([text], { type: 'application/jsonl' });
   const url = URL.createObjectURL(blob);
@@ -817,7 +823,7 @@ function lock() {
       const pts = Math.round(100 * level * Math.pow(minNum, 1.5) * chainMult);
       earnedScore += pts;
       scorePopups.push({
-        x: COLS * BLOCK / 2, y: fullRow * BLOCK,
+        x: COLS * BLOCK / 2, y: boardTop + fullRow * BLOCK,
         text: chainDepth > 0 ? `+${pts} ×${chainDepth+1}` : `+${pts}`,
         startTime: performance.now()
       });
@@ -873,27 +879,28 @@ function updateUI() {
 
 // Main block draw (board canvas)
 function drawBoardBlock(num, x, y, size, ghost) {
+  const py = boardTop + y * size;
   if (ghost) {
     ctx.fillStyle = 'rgba(255,255,255,0.07)';
-    ctx.fillRect(x * size, y * size, size, size);
+    ctx.fillRect(x * size, py, size, size);
     ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.strokeRect(x * size + 0.5, y * size + 0.5, size - 1, size - 1);
+    ctx.strokeRect(x * size + 0.5, py + 0.5, size - 1, size - 1);
     return;
   }
   ctx.fillStyle = numToColor(num);
-  ctx.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  ctx.fillRect(x * size + 1, py + 1, size - 2, size - 2);
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  ctx.fillRect(x * size + 1, y * size + 1, 4, size - 2);
+  ctx.fillRect(x * size + 1, py + 1, size - 2, 4);
+  ctx.fillRect(x * size + 1, py + 1, 4, size - 2);
   ctx.fillStyle = 'rgba(0,0,0,0.2)';
-  ctx.fillRect(x * size + size - 4, y * size + 1, 3, size - 2);
-  ctx.fillRect(x * size + 1, y * size + size - 4, size - 2, 3);
+  ctx.fillRect(x * size + size - 4, py + 1, 3, size - 2);
+  ctx.fillRect(x * size + 1, py + size - 4, size - 2, 3);
   if (numLevel > 1) {
     ctx.fillStyle = numTextColor(num);
     ctx.font = `bold ${size * 0.6}px Courier New`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(num, x * size + size / 2, y * size + size / 2 + 1);
+    ctx.fillText(num, x * size + size / 2, py + size / 2 + 1);
   }
 }
 
@@ -947,28 +954,65 @@ function drawPreview(c, mat, canvasW, canvasH, nb) {
       }
 }
 
+function setSumBar(show) {
+  showSumBar = show;
+  boardTop = show ? 33 : 0;
+  const h = show ? 663 : 600;
+  canvas.height = h;
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) sidebar.style.height = h + 'px';
+  document.getElementById('message').style.top = (boardTop + 2) + 'px';
+  // Desktop bottom button: lit up when on
+  const btn = document.getElementById('sum-btn');
+  if (btn) {
+    btn.style.background = show ? '#0d1f3c' : '#071020';
+    btn.style.color      = show ? '#7ab8d4' : '#556';
+  }
+  // Mobile header button: lit up when on
+  const mb = document.getElementById('mob-sum');
+  if (mb) {
+    mb.style.background = show ? '#7a3510' : '#1a3a6a';
+    mb.style.borderColor = show ? '#c87941' : '#2a5498';
+    mb.style.color      = show ? '#ffd0a0' : '#aac';
+  }
+}
+
 function drawSumBar() {
-  const y = ROWS * BLOCK; // one row below the board
+  if (!showSumBar) return;
   const maxSum = ROWS * 4; // 80 — maximum possible column sum (20 rows × MAX 4)
-  // Divider — bright 3px line to visually separate board from sum bar
-  ctx.fillStyle = '#4a7ab8';
-  ctx.fillRect(0, y, COLS * BLOCK, 3);
+  // Pre-compute column sums once
+  const sums = [];
   for (let c = 0; c < COLS; c++) {
-    let sum = 0;
+    let s = 0;
     for (let r = 0; r < ROWS; r++)
-      if (board[r][c]) sum += board[r][c].num;
-    const t = Math.min(sum / maxSum, 1);
-    const L = Math.round(55 - 51 * t); // 55% (sum=0, light steel-blue) → 4% (sum=80, near-black navy)
-    ctx.fillStyle = `hsl(215, 65%, ${L}%)`;
-    ctx.fillRect(c * BLOCK + 1, y + 3, BLOCK - 2, BLOCK - 4);
-    if (sum > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * t})`;
-      ctx.font = `bold ${BLOCK * 0.5}px Courier New`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(sum, c * BLOCK + BLOCK / 2, y + BLOCK / 2 + 2);
+      if (board[r][c]) s += board[r][c].num;
+    sums.push(s);
+  }
+
+  function drawBar(dividerY, cellsAboveDivider) {
+    // Divider
+    ctx.fillStyle = '#4a7ab8';
+    ctx.fillRect(0, dividerY, COLS * BLOCK, 3);
+    // Cells
+    const cellY = cellsAboveDivider ? dividerY - BLOCK : dividerY + 3;
+    for (let c = 0; c < COLS; c++) {
+      const sum = sums[c];
+      const t = Math.min(sum / maxSum, 1);
+      const L = Math.round(55 - 51 * t);
+      ctx.fillStyle = `hsl(215, 65%, ${L}%)`;
+      ctx.fillRect(c * BLOCK + 1, cellY + 1, BLOCK - 2, BLOCK - 2);
+      if (sum > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * t})`;
+        ctx.font = `bold ${BLOCK * 0.5}px Courier New`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sum, c * BLOCK + BLOCK / 2, cellY + BLOCK / 2 + 1);
+      }
     }
   }
+
+  drawBar(boardTop - 3, true);                    // top: cells above, divider at bottom
+  drawBar(boardTop + ROWS * BLOCK, false);         // bottom: divider at top, cells below
 }
 
 function draw() {
@@ -977,7 +1021,7 @@ function draw() {
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
-      ctx.strokeRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
+      ctx.strokeRect(c * BLOCK, boardTop + r * BLOCK, BLOCK, BLOCK);
 
   // Build set of cells being cross-faded so we can skip normal rendering for them
   const subtractingSet = new Set();
@@ -1009,7 +1053,7 @@ function draw() {
 
   if (clearingRows && clearingRows.length > 0) {
     ctx.fillStyle = 'rgba(255, 220, 100, 0.3)';
-    for (const r of clearingRows) ctx.fillRect(0, r * BLOCK, COLS * BLOCK, BLOCK);
+    for (const r of clearingRows) ctx.fillRect(0, boardTop + r * BLOCK, COLS * BLOCK, BLOCK);
   }
 
   if (fallingAnim) {
