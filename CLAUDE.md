@@ -94,7 +94,14 @@ Sidebar (130px wide, same height as board):
 - Controls cheatsheet (font-size 10px, line-height 1.6, `flex: 2`)
 - 🔊/🔇 sound toggle icon button at bottom
 
-Canvas: 300×600 (10 cols × 20 rows × 30px blocks), border `#1e3a5f`.
+Canvas: 300×630 (10 cols × 20 rows × 30px blocks + 30px sum bar row), border `#1e3a5f`.
+
+**Sum bar** — one block per column drawn in the 30px row immediately below the board:
+- Value: sum of all locked cell numbers in that column
+- Color: `hsl(215, 65%, L%)` where L = `55 - 51 * (sum / 80)` — 55% (sum=0, light steel-blue) → 4% (sum=80, near-black navy). Max possible sum = 20 rows × 4 MAX = 80.
+- Text: sum value shown when > 0; opacity scales with sum (`0.4 + 0.5 * t`) so heavier columns are more legible
+- Divider: 3px `#4a7ab8` bright line separating board from sum bar; sum bar cells start below it
+- Does not include the active falling piece; reflects locked board state only
 
 ---
 

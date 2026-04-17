@@ -51,7 +51,7 @@
       flex-direction: column;
       gap: 0;
       width: 130px;
-      height: 600px;
+      height: 630px;
       overflow: hidden;
     }
     .panel {
@@ -288,7 +288,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.122</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.124</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -301,7 +301,7 @@
 <div id="game-container">
   <div id="board-area">
     <div id="board-wrap" style="position:relative;">
-      <canvas id="board" width="300" height="600"></canvas>
+      <canvas id="board" width="300" height="630"></canvas>
       <div id="message">
         <h2 id="msg-title">GAME OVER</h2>
         <p id="msg-sub">Enter or Space to restart</p>
@@ -311,7 +311,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.122</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.124</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -548,7 +548,7 @@ function replayLock() {
 }
 function downloadReplay() {
   if (!replayLog.length) return;
-  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.122', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.124', max: numLevel, date: new Date().toISOString(), score, level, lines } };
   const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
   const blob = new Blob([text], { type: 'application/jsonl' });
   const url = URL.createObjectURL(blob);
@@ -947,6 +947,30 @@ function drawPreview(c, mat, canvasW, canvasH, nb) {
       }
 }
 
+function drawSumBar() {
+  const y = ROWS * BLOCK; // one row below the board
+  const maxSum = ROWS * 4; // 80 — maximum possible column sum (20 rows × MAX 4)
+  // Divider — bright 3px line to visually separate board from sum bar
+  ctx.fillStyle = '#4a7ab8';
+  ctx.fillRect(0, y, COLS * BLOCK, 3);
+  for (let c = 0; c < COLS; c++) {
+    let sum = 0;
+    for (let r = 0; r < ROWS; r++)
+      if (board[r][c]) sum += board[r][c].num;
+    const t = Math.min(sum / maxSum, 1);
+    const L = Math.round(55 - 51 * t); // 55% (sum=0, light steel-blue) → 4% (sum=80, near-black navy)
+    ctx.fillStyle = `hsl(215, 65%, ${L}%)`;
+    ctx.fillRect(c * BLOCK + 1, y + 3, BLOCK - 2, BLOCK - 4);
+    if (sum > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * t})`;
+      ctx.font = `bold ${BLOCK * 0.5}px Courier New`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(sum, c * BLOCK + BLOCK / 2, y + BLOCK / 2 + 2);
+    }
+  }
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1022,6 +1046,7 @@ function draw() {
     ctx.restore();
   }
 
+  drawSumBar();
   drawPreview(nextCtx, nextPiece.matrix, nextCanvas.width, nextCanvas.height, BLOCK);
   drawPreview(mobCtx, nextPiece.matrix, mobNext.width, mobNext.height, BLOCK);
 }
