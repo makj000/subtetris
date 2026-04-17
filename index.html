@@ -288,7 +288,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.121</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.122</span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -311,7 +311,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.121</div>
+      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.122</div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -416,8 +416,8 @@ let highScore = parseInt(localStorage.getItem('subtetris_hi')       || '0', 10);
 let highLevel = parseInt(localStorage.getItem('subtetris_hi_lvl')   || '1', 10);
 let highLines = parseInt(localStorage.getItem('subtetris_hi_lines') || '0', 10);
 let scorePopups = [];
-const CLEAR_MS = 500;
-const FALL_MS = 500;
+const CLEAR_MS = 350;
+const FALL_MS = 350;
 function animDelay(ms)    { return animSpeed === 'med' ? Math.round(ms / 2) : 0; }
 function animDuration(ms) { return animSpeed === 'med' ? Math.round(ms / 2) : 1; }
 const POPUP_MS = 1200;
@@ -548,7 +548,7 @@ function replayLock() {
 }
 function downloadReplay() {
   if (!replayLog.length) return;
-  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.120', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.122', max: numLevel, date: new Date().toISOString(), score, level, lines } };
   const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
   const blob = new Blob([text], { type: 'application/jsonl' });
   const url = URL.createObjectURL(blob);

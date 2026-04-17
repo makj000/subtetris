@@ -224,7 +224,7 @@
 <script>
 // ── Constants (must match index.html) ──
 const COLS = 10, ROWS = 20, BLOCK = 30;
-const FALL_MS = 150, CLEAR_MS = 250;
+const FALL_MS = 120, CLEAR_MS = 175;
 
 const TEMPLATES = {
   I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
@@ -259,6 +259,8 @@ let replayPlaying = false;
 let replayPaused = false;
 let speedMult = 1; // 0=instant, 0.5, 1, 2
 let replayCurrentT = null; // t field of the currently-playing piece (ms from game start)
+let replayPauseOffset = 0;   // total ms spent paused (excluded from animation clock)
+let replayPauseStart = null; // performance.now() when current pause began
 
 // ── Canvas ──
 const canvas = document.getElementById('canvas');
@@ -271,6 +273,11 @@ function animDelay(ms)    { return speedMult === 0 ? 0 : Math.round(ms / speedMu
 function animDuration(ms) { return speedMult === 0 ? 0 : Math.round(ms / speedMult); }
 function moveDelay()      { return speedMult === 0 ? 0 : Math.round(130 / speedMult); }
 function dropDelay()      { return speedMult === 0 ? 0 : Math.round(45  / speedMult); }
+// Animation clock: pauses while replayPaused so visual animations actually freeze
+function animNow() {
+  const running = replayPauseStart !== null ? performance.now() - replayPauseStart : 0;
+  return performance.now() - replayPauseOffset - running;
+}
 
 // ── Game logic (identical to index.html) ──
 function newBoard() {
@@ -378,7 +385,7 @@ function applyGravityUntilStable(onDone, gen) {
     }
   }
   if (!fallers.length) { onDone(); return; }
-  fallingAnim = { blocks: fallers, startTime: performance.now() };
+  fallingAnim = { blocks: fallers, startTime: animNow() };
   pauseAware(gen, animDelay(FALL_MS), () => {
     for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
     fallingAnim = null;
@@ -435,7 +442,7 @@ function applyColumnFall(zeroedCols, fullRow, onDone, gen) {
     }
   }
   if (!fallers.length) { onDone(); return; }
-  fallingAnim = { blocks: fallers, startTime: performance.now() };
+  fallingAnim = { blocks: fallers, startTime: animNow() };
   pauseAware(gen, animDelay(FALL_MS), () => {
     for (const fb of fallers) board[fb.toRow][fb.col] = { num: fb.num };
     fallingAnim = null;
@@ -521,7 +528,7 @@ function draw() {
   }
 
   // Subtracting animation
-  const now = performance.now();
+  const now = animNow();
   if (subtractingAnim) {
     const t = Math.min(1, (now - subtractingAnim.startTime) / Math.max(1, animDuration(CLEAR_MS)));
     for (const b of subtractingAnim.blocks) {
@@ -680,14 +687,14 @@ function lockAndClear(gen, onDone) {
         }
       }
       clearingRows = [];
-      subtractingAnim = { blocks: subtractBlocks, startTime: performance.now() };
+      subtractingAnim = { blocks: subtractBlocks, startTime: animNow() };
       const chainMult = Math.pow(1.5, chainDepth);
       const pts = Math.round(100 * level * Math.pow(minNum, 1.5) * chainMult);
       earnedScore += pts;
       scorePopups.push({
         x: COLS*BLOCK/2, y: fullRow*BLOCK,
         text: chainDepth > 0 ? `+${pts} ×${chainDepth+1}` : `+${pts}`,
-        startTime: performance.now(),
+        startTime: animNow(),
       });
       pauseAware(gen, animDelay(CLEAR_MS), () => {
         subtractingAnim = null;
@@ -752,6 +759,8 @@ function startReplay() {
   replayCurrentT = null;
   replayPlaying = true;
   replayPaused = false;
+  replayPauseOffset = 0;
+  replayPauseStart = null;
   piece = null;
   document.getElementById('play-btn').textContent = '⏸ PAUSE';
   document.getElementById('restart-btn').disabled = false;
@@ -763,6 +772,12 @@ function startReplay() {
 function togglePause() {
   if (!replayPlaying) return;
   replayPaused = !replayPaused;
+  if (replayPaused) {
+    replayPauseStart = performance.now();
+  } else {
+    replayPauseOffset += performance.now() - replayPauseStart;
+    replayPauseStart = null;
+  }
   document.getElementById('play-btn').textContent = replayPaused ? '▶ PLAY' : '⏸ PAUSE';
 }
 
@@ -923,6 +938,7 @@ function seekToIndex(targetIdx) {
   replayGen++;
   const gen = replayGen;
   replayPlaying = false; replayPaused = false;
+  replayPauseOffset = 0; replayPauseStart = null;
   clearing = false; clearingRows = []; fallingAnim = null; subtractingAnim = null; scorePopups = [];
   piece = null; replayCurrentT = null;
 

@@ -58,7 +58,7 @@ After cells vanish, blocks above fall to fill gaps. The process repeats until no
 Highlight row → subtract & remove zeroed cells → animate falling blocks (ease-out curve, 150ms pause between waves).
 
 Timing scales with **animation speed** setting (`animSpeed`):
-- **ON (med):** 250ms per phase (default)
+- **ON (med):** 175ms per phase (default)
 - **OFF (fast):** instant (0ms delays)
 
 `animDelay(ms)` controls `setTimeout` durations; `animDuration(ms)` controls render interpolation denominators — both must use the same scale factor so animations complete fully before the next phase fires.
