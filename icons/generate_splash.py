@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Subtetris launch-screen splash images.
+Generate Minusfall launch-screen splash images.
 
 Run from the project root:
     python3 icons/generate_splash.py
@@ -42,8 +42,8 @@ PROJECT_ROOT = SCRIPT_DIR.parent              # project root
 INDEX_HTML   = PROJECT_ROOT / 'index.html'
 SPLASH_DIR   = PROJECT_ROOT / 'ios/App/App/Assets.xcassets/Splash.imageset'
 CHROME       = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-TMP_HTML     = '/tmp/subtetris_ss_gen.html'
-TMP_RAW      = '/tmp/subtetris_ss_raw.png'
+TMP_HTML     = '/tmp/minusfall_ss_gen.html'
+TMP_RAW      = '/tmp/minusfall_ss_raw.png'
 
 NAVY = (10, 22, 40)   # #0a1628
 
@@ -179,16 +179,14 @@ if result.returncode != 0 or not os.path.exists(TMP_RAW):
     sys.exit(1)
 
 # ── Load and crop to content ───────────────────────────────────────────────
-raw = Image.open(TMP_RAW)
+raw = Image.open(TMP_RAW).convert('RGB')
 rw, rh = raw.size
-import numpy as np
-arr_raw = np.array(raw)
 
 # Find bottom of content (trim trailing navy)
-nav = np.array(NAVY)
 content_h = rh
+pixels = raw.load()
 for y in range(rh - 1, 0, -1):
-    if np.abs(arr_raw[y, :, :3].astype(int) - nav).max(axis=1).max() > 15:
+    if any(max(abs(pixels[x, y][i] - NAVY[i]) for i in range(3)) > 15 for x in range(rw)):
         content_h = y + 1
         break
 

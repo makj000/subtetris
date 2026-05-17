@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Subtetris Replay</title>
+  <title>Minusfall Replay</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
@@ -149,7 +149,7 @@
 
   <div id="sidebar">
     <div class="panel" id="title-panel">
-      <span class="name-sub">SUB</span><span class="name-rest">TETRIS</span>
+      <span class="name-sub">MINUS</span><span class="name-rest">FALL</span>
       <span class="replay-label">REPLAY v1.1</span>
     </div>
 
@@ -989,8 +989,8 @@ function loadReplay(file) {
     const lines_raw = e.target.result.trim().split('\n');
     try {
       const parsed = lines_raw.map(l => JSON.parse(l));
-      if (!parsed[0].format || !parsed[0].format.startsWith('subtetris-replay')) {
-        alert('Not a valid Subtetris replay file.');
+      if (!parsed[0].format || (!parsed[0].format.startsWith('minusfall-replay') && !parsed[0].format.startsWith('subtetris-replay'))) {
+        alert('Not a valid Minusfall replay file.');
         return;
       }
       replayHeader = parsed[0];

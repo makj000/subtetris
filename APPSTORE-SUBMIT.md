@@ -48,7 +48,7 @@ In Organizer:
 
 ## Step 7 — New Version in App Store Connect
 
-[appstoreconnect.apple.com](https://appstoreconnect.apple.com) → My Apps → Subtetris:
+[appstoreconnect.apple.com](https://appstoreconnect.apple.com) → My Apps → Minusfall:
 1. **+ Version or Platform → iOS**
 2. Enter version number (must match Xcode Marketing Version)
 3. **Create**

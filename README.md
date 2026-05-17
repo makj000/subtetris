@@ -1,6 +1,6 @@
-# Subtetris
+# Minusfall
 
-A Tetris variant where blocks carry numbers and rows are cleared by **subtraction** instead of deletion.
+A falling-block puzzle where blocks carry numbers and rows are cleared by **subtraction** instead of deletion.
 
 Available on the [App Store](https://apps.apple.com/app/id) <!-- add your App ID here -->
 
@@ -8,19 +8,19 @@ Available on the [App Store](https://apps.apple.com/app/id) <!-- add your App ID
 
 ## How It Works
 
-Standard Tetris pieces fall onto a 10×20 board, but each cell carries a number (1–4). When a row fills up, the game subtracts the row's **minimum value** from every cell — cells that reach zero disappear, the rest survive and fall.
+Seven tetromino shapes fall onto a 10×20 board, but each cell carries a number (1–4). When a row fills up, the game subtracts the row's **minimum value** from every cell — cells that reach zero disappear, the rest survive and fall.
 
-This creates cascading chain clears, surviving blocks tumbling down, and a puzzle-like layer on top of classic Tetris.
+This creates cascading chain clears, surviving blocks tumbling down, and a puzzle-like layer on top of classic falling-block play.
 
 ### Key Rules
 
 - **Row clear:** subtract the row's minimum value; cells at 0 vanish
 - **Cascade gravity:** cells above gaps fall into them; connected hanging blocks fall together
 - **Chains:** if falling blocks form new full rows, the process repeats
-- **MAX # setting:** controls the number range (1 = all ones, classic Tetris feel; 4 = numbers 1–4)
+- **MAX # setting:** controls the number range (1 = all ones, classic falling-block feel; 4 = numbers 1–4)
 - **Support Model:** `GND` (ground-based gravity) or `CLU` (cluster-based gravity)
-- **Score:** standard Tetris scoring × level; +1 per soft-drop row
-- **Speed:** constant drop speed (NES Tetris level 1 pace, ~800ms)
+- **Score:** standard line-clear scoring × level; +1 per soft-drop row
+- **Speed:** constant drop speed (NES level 1 pace, ~800ms)
 
 ---
 
@@ -64,7 +64,7 @@ package.json
 www/                    # Capacitor web dir (copy of index.html for iOS build)
 ios/
   App/
-    Subtetris.xcodeproj # Xcode project (Capacitor-generated)
+    App.xcodeproj       # Xcode project (Capacitor-generated)
 icons/                  # App icon assets
 changelog.txt           # Full version history
 CLAUDE.md               # Living design spec

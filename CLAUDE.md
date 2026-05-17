@@ -1,20 +1,20 @@
-# Subtetris — Game Prompt
+# Minusfall — Game Prompt
 
-Build a single-file HTML5 canvas game called **Subtetris** — a Tetris variant where blocks carry numbers and rows are cleared by subtraction instead of deletion.
+Build a single-file HTML5 canvas game called **Minusfall** — a falling-block puzzle where blocks carry numbers and rows are cleared by subtraction instead of deletion.
 
 ---
 
 ## Core Concept
 
-Subtetris is a Tetris variant where blocks carry numbers and rows are cleared by **subtraction** instead of deletion.
+Minusfall is a falling-block puzzle where blocks carry numbers and rows are cleared by **subtraction** instead of deletion.
 
 ---
 
 ## Pieces & Numbers
 
-- Standard Tetris pieces (I, O, T, S, Z, J, L), each cell carrying a number
+- Seven tetromino pieces (I, O, T, S, Z, J, L), each cell carrying a number
 - **MAX # setting (1–4):** controls the range of numbers on block cells
-  - MAX=1 → all cells are 1 (plays like classic Tetris visually; numbers hidden)
+  - MAX=1 → all cells are 1 (plays like a classic falling-block game visually; numbers hidden)
   - MAX=2 → cells are randomly 1 or 2. Etc.
 - Ghost piece shown
 
@@ -46,7 +46,7 @@ After cells vanish, blocks above fall to fill gaps. The process repeats until no
 
 ## Scoring & Progression
 
-- Score: standard Tetris scoring × level. +1 per soft-drop row
+- Score: standard line-clear scoring × level. +1 per soft-drop row
 - Multi-row chains: rows processed top-to-bottom; each additional chain depth awards bonus score
 - Level increases every 10 lines cleared
 - Drop speed is **constant** (NES level-1 pace, ~800ms) — does not change with level
@@ -74,7 +74,7 @@ Timing scales with **animation speed** setting (`animSpeed`):
   - 2: `hsl(22, 90%, 44%)` burnt orange — light text `rgba(255,255,255,0.92)`
   - 3: `hsl(14, 88%, 27%)` dark reddish-brown — light text
   - 4: `hsl(6, 80%, 15%)` near-black red — light text
-- Numbers drawn on blocks (hidden when MAX=1 — plays like classic Tetris visually)
+- Numbers drawn on blocks (hidden when MAX=1 — plays like a classic falling-block game visually)
 - Blocks have a highlight bevel (top/left lighter, bottom/right darker)
 - Row-clearing highlight: yellow overlay `rgba(255, 220, 100, 0.3)` on the target row
 - GAME OVER / PAUSE popup: semi-transparent overlay at top of board, below border
@@ -84,7 +84,7 @@ Timing scales with **animation speed** setting (`animSpeed`):
 ## Desktop Layout
 
 Sidebar (130px wide, height matches canvas — 600px default, 663px when sum bar shown; set dynamically by `setSumBar`):
-- Title "SUBTETRIS" (font-size 16px, letter-spacing 2px) + version below
+- Title "MINUSFALL" (font-size 16px, letter-spacing 2px) + version below; a small `?` beside the version opens an info popup with Support and Privacy links
 - Score — DSEG7 20px, dual-layer display (record in navy, current in orange); expands beyond 5 digits dynamically
 - Level + Lines (side by side) — same dual-layer digit display; Level min 2 digits, Lines min 3 digits
 - Next piece preview canvas (120×90, `flex: none`) — blocks drawn at BLOCK px size
@@ -112,7 +112,7 @@ Canvas: 300×600 when sum bar hidden (default), 300×663 when shown. `boardTop` 
 ## Mobile Layout (`@media (max-width: 600px)`)
 
 **Top bar (88px tall, fixed):**
-- Left: "SUBTETRIS" + version stacked, then Score | Lvl | Lines stats row below (dual-layer digit display, same as desktop)
+- Left: "MINUSFALL" + version stacked, small `?` beside the version, then Score | Lvl | Lines stats row below (dual-layer digit display, same as desktop)
 - Center-right: `#mob-sum` SUM toggle (36×36px, `#1a3a6a`/burnt-orange when active, id `mob-sum`) then `#mob-snd` 🔊/🔇 sound toggle (36×36px, `#1a3a6a`, id `mob-snd`) — both sit between the brand and the next preview
 - Right: NEXT piece preview canvas (96×72px CSS, 120×90 buffer)
 
@@ -211,7 +211,7 @@ No x-delta needed — `idealX = piece.x` is correct for all their rotation state
 - `requestAnimationFrame` game loop
 - Async clearing chain via `setTimeout` (no blocking)
 - `applyColumnFall(zeroedCols, fullRow, onDone, gen)` — cluster-mode cascade for one cleared row; `applyGravityUntilStable(onDone, gen)` — BFS final-settle pass after all rows processed. Both move one row at a time per wave and repeat until settled.
-- **Replay recording** — every game is silently recorded. `replaySpawn(p)` logs each piece at spawn; `replayLock()` appends `{t, piece, nums, moves, rot, col}` to `replayLog` on lock. `downloadReplay()` serialises `replayLog` as a `.jsonl` file (one JSON object per line: header + one entry per piece) and triggers a browser download. Format: `subtetris-replay/v1`. Played back in `replay.html`.
+- **Replay recording** — every game is silently recorded. `replaySpawn(p)` logs each piece at spawn; `replayLock()` appends `{t, piece, nums, moves, rot, col}` to `replayLog` on lock. `downloadReplay()` serialises `replayLog` as a `.jsonl` file (one JSON object per line: header + one entry per piece) and triggers a browser download. Format: `minusfall-replay/v1`. Played back in `replay.html`.
 - **`gameGen` counter** — incremented by `startGame()`; every `setTimeout` callback in `lock()`/`step()`/`applyGravityUntilStable()` captures `myGen = gameGen` at call time and returns early if `gameGen !== myGen`. Prevents stale callbacks from overwriting the new game's state or calling `endGame()` after NEW is pressed mid-clearing-chain
 - **Always bump the patch version** (in sidebar and mobile header — the `<title>` tag has no version) on every turn that makes any code change to `index.html` — do this as the final step of that turn
 - **Always update CLAUDE.md** in the same turn as any change that affects game mechanics, UI, layout, or architecture — keep it the source of truth

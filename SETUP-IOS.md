@@ -1,4 +1,4 @@
-# Subtetris — iOS App Store Setup
+# Minusfall — iOS App Store Setup
 
 ## Prerequisites
 

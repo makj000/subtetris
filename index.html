@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <title>Subtetris</title>
+  <title>Minusfall</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css">
 
   <!-- iOS App Store / PWA meta tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Subtetris">
+  <meta name="apple-mobile-web-app-title" content="Minusfall">
   <meta name="theme-color" content="#0a1628">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
   <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120.png">
@@ -113,6 +113,94 @@
     }
     #message h2 { margin-bottom: 12px; font-size: 20px; }
     #message p { font-size: 13px; color: #aaa; }
+    .version-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .help-btn {
+      width: 15px;
+      height: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid #2a5498;
+      border-radius: 50%;
+      background: #071020;
+      color: #99a;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .help-btn:hover,
+    .help-btn:active {
+      background: #1a3a6a;
+      color: #ccd;
+    }
+    #info-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2,8,18,0.68);
+    }
+    #info-card {
+      width: min(260px, calc(100vw - 40px));
+      background: #0d1f3c;
+      border: 1px solid #2a5498;
+      border-radius: 6px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+      padding: 14px;
+    }
+    .info-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .info-head h2 {
+      color: #ffaa44;
+      font-size: 13px;
+      letter-spacing: 2px;
+      margin: 0;
+    }
+    .info-close {
+      width: 22px;
+      height: 22px;
+      border: 1px solid #2a5498;
+      background: #071020;
+      color: #99a;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+    .info-links {
+      display: grid;
+      gap: 8px;
+    }
+    .info-links a {
+      display: block;
+      padding: 10px;
+      border: 1px solid #1e3a5f;
+      border-radius: 4px;
+      background: #071020;
+      color: #ccd;
+      text-align: center;
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    .info-links a:hover,
+    .info-links a:active {
+      background: #1a3a6a;
+      color: #fff;
+    }
 
     /* Number level buttons (sidebar) */
     .nl-row { display: flex; gap: 4px; margin-top: 4px; }
@@ -288,7 +376,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">SUB</span><span class="name-rest">TETRIS</span></span><span class="mh-ver" style="align-self:center; margin-left:6px;">v1.5.129</span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">MINUS</span><span class="name-rest">FALL</span></span><span class="version-wrap" style="align-self:center; margin-left:6px;"><span class="mh-ver">v1.5.131</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -311,8 +399,8 @@
   </div>
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
-      <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">SUB</span><span style="color:#ffaa44;">TETRIS</span></div>
-      <div style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;">v1.5.129</div>
+      <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">MINUS</span><span style="color:#ffaa44;">FALL</span></div>
+      <div class="version-wrap" style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;"><span>v1.5.131</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -361,6 +449,19 @@
   </div>
 </div>
 
+<div id="info-popup" role="dialog" aria-modal="true" aria-labelledby="info-title">
+  <div id="info-card">
+    <div class="info-head">
+      <h2 id="info-title">Links</h2>
+      <button type="button" class="info-close" onclick="closeInfoPopup()" aria-label="Close links">X</button>
+    </div>
+    <div class="info-links">
+      <a href="docs/support.html" target="_blank" rel="noopener">Support</a>
+      <a href="docs/privacy.html" target="_blank" rel="noopener">Privacy</a>
+    </div>
+  </div>
+</div>
+
 <div id="mob-hints">swipe for left/right/drop, tap for rotate</div>
 <!-- Touch controls (hidden on desktop) -->
 <div id="touch-ctrl">
@@ -399,7 +500,7 @@ const TEMPLATES = {
 
 const SCORE_TABLE = [0, 100, 300, 500, 800];
 
-// NES Tetris frame table (frames per drop at 60fps → ms)
+// Classic falling-block frame table (frames per drop at 60fps → ms)
 const NES_FRAMES = [48,43,38,33,28,23,18,13,8,6,5,5,5,4,4,4,3,3,3,2,2,2,2,2,2,2,2,2,2,1];
 function nesInterval(level) {
   const frames = NES_FRAMES[Math.min(level - 1, NES_FRAMES.length - 1)];
@@ -428,6 +529,21 @@ const FALL_MS = 350;
 function animDelay(ms)    { return animSpeed === 'med' ? Math.round(ms / 2) : 0; }
 function animDuration(ms) { return animSpeed === 'med' ? Math.round(ms / 2) : 1; }
 const POPUP_MS = 1200;
+
+function openInfoPopup(e) {
+  if (e) e.stopPropagation();
+  const popup = document.getElementById('info-popup');
+  if (popup) popup.style.display = 'flex';
+}
+
+function closeInfoPopup() {
+  const popup = document.getElementById('info-popup');
+  if (popup) popup.style.display = 'none';
+}
+
+document.getElementById('info-popup').addEventListener('click', e => {
+  if (e.target.id === 'info-popup') closeInfoPopup();
+});
 
 // ── Sound engine ──
 let soundOn = true;
@@ -555,13 +671,13 @@ function replayLock() {
 }
 function downloadReplay() {
   if (!replayLog.length) return;
-  const header = { format: 'subtetris-replay/v1', meta: { version: '1.5.128', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const header = { format: 'minusfall-replay/v1', meta: { version: '1.5.131', max: numLevel, date: new Date().toISOString(), score, level, lines } };
   const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
   const blob = new Blob([text], { type: 'application/jsonl' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `subtetris-${new Date().toISOString().slice(0,19).replace(/[T:]/g, '-')}.jsonl`;
+  a.download = `minusfall-${new Date().toISOString().slice(0,19).replace(/[T:]/g, '-')}.jsonl`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1168,6 +1284,11 @@ function startGame() {
 
 // ── Keyboard ──
 document.addEventListener('keydown', e => {
+  if (document.getElementById('info-popup').style.display === 'flex') {
+    if (e.key === 'Escape') closeInfoPopup();
+    e.preventDefault();
+    return;
+  }
   if (e.key === 'n' || e.key === 'N') { e.preventDefault(); startGame(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && gameOver) { e.preventDefault(); startGame(); return; }
   if ((e.key === 'p' || e.key === 'P' || e.key === ' ') && !gameOver) {
