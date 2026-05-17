@@ -2,10 +2,7 @@
 set -e
 cd "$(dirname "$0")"
 
-echo "Copying index.html to www..."
-cp index.html www/index.html
-
-echo "Running cap sync..."
+echo "Syncing docs/ to iOS..."
 npx cap sync ios
 
 echo "Done."

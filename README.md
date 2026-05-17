@@ -47,7 +47,7 @@ This creates cascading chain clears, surviving blocks tumbling down, and a puzzl
 
 ## Tech Stack
 
-- **Single HTML file** (`index.html`) — no framework, no build step
+- **Single HTML file** (`docs/index.html`) — no framework, no build step
 - **HTML5 Canvas** for the game board and piece preview
 - **Web Audio API** for sound effects
 - **Capacitor 6** for iOS app wrapping (`com.subtetris.app`)
@@ -58,10 +58,13 @@ This creates cascading chain clears, surviving blocks tumbling down, and a puzzl
 ## Project Structure
 
 ```
-index.html              # Entire game — HTML, CSS, JS in one file
+docs/
+  index.html            # Entire game — HTML, CSS, JS in one file
+  support.html
+  privacy.html
+  icons/                # Web icons used by the game page
 capacitor.config.json
 package.json
-www/                    # Capacitor web dir (copy of index.html for iOS build)
 ios/
   App/
     App.xcodeproj       # Xcode project (Capacitor-generated)
@@ -90,7 +93,7 @@ npm run cap:ios
 
 ## Building for iOS
 
-1. `npm run cap:sync` — copies `index.html` to `www/` and syncs Capacitor
+1. `npm run cap:sync` — syncs the `docs/` web root to iOS
 2. `npm run cap:ios` — opens Xcode
 3. In Xcode: select your signing team, choose a device/simulator, hit Run
 

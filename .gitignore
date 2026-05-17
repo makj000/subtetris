@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 *.xcuserstate
 xcuserdata/
+data/
 DerivedData/
 .build/
 

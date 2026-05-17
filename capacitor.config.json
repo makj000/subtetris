@@ -1,7 +1,7 @@
 {
   "appId": "com.subtetris.app",
   "appName": "Minusfall",
-  "webDir": "www",
+  "webDir": "docs",
   "server": {
     "iosScheme": "https"
   },

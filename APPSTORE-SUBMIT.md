@@ -2,7 +2,7 @@
 
 ## Before You Start
 
-- [ ] Bump patch version in `index.html` (title, sidebar, mobile header)
+- [ ] Bump patch version in `docs/index.html` (title, sidebar, mobile header)
 - [ ] Run `python3 icons/generate_splash.py` to regenerate screenshots and splash images
 - [ ] Run `./update_mobile_app.sh` to sync to iOS
 

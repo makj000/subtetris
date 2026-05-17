@@ -39,7 +39,7 @@ from PIL import Image
 # ── Paths ──────────────────────────────────────────────────────────────────
 SCRIPT_DIR   = Path(__file__).parent          # icons/
 PROJECT_ROOT = SCRIPT_DIR.parent              # project root
-INDEX_HTML   = PROJECT_ROOT / 'index.html'
+INDEX_HTML   = PROJECT_ROOT / 'docs' / 'index.html'
 SPLASH_DIR   = PROJECT_ROOT / 'ios/App/App/Assets.xcassets/Splash.imageset'
 CHROME       = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 TMP_HTML     = '/tmp/minusfall_ss_gen.html'

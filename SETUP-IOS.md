@@ -75,7 +75,7 @@ Xcode generates a default launch screen. Customize in
 
 ## Ongoing workflow
 
-Whenever you update `index.html`:
+Whenever you update `docs/`:
 
 ```bash
 npx cap copy ios      # sync web changes into the native shell

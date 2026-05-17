@@ -2,12 +2,12 @@
   "name": "minusfall",
   "version": "2.0.0",
   "description": "Minusfall - a falling-block puzzle where numbered rows clear by subtraction",
-  "main": "index.html",
+  "main": "docs/index.html",
   "scripts": {
     "build": "echo 'No build step required — single HTML file'",
-    "cap:sync": "cp index.html www/ && npx cap sync ios",
+    "cap:sync": "npx cap sync ios",
     "cap:ios": "npx cap open ios",
-    "serve": "python3 -m http.server 3456"
+    "serve": "python3 -m http.server 3456 -d docs"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",
