@@ -100,4 +100,4 @@ npm run cap:ios
 
 See [changelog.txt](changelog.txt) for full version history.
 
-Current version: **v1.5.111**
+Current version: **v2.0.0**

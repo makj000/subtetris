@@ -1,6 +1,9 @@
 Minusfall — Changelog
 =====================
 
+v2.0.0 (2026-05-16)
+  - Major version bump for the Minusfall title change and support/privacy popup.
+
 v1.5.103 (2026-04-08)
   - Falling rules rewritten per CLAUDE.md spec:
     · Rows processed one at a time (topmost first), not all simultaneously

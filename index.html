@@ -376,7 +376,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">MINUS</span><span class="name-rest">FALL</span></span><span class="version-wrap" style="align-self:center; margin-left:6px;"><span class="mh-ver">v1.5.131</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">MINUS</span><span class="name-rest">FALL</span></span><span class="version-wrap" style="align-self:center; margin-left:6px;"><span class="mh-ver">v2.0.0</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -400,7 +400,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">MINUS</span><span style="color:#ffaa44;">FALL</span></div>
-      <div class="version-wrap" style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;"><span>v1.5.131</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></div>
+      <div class="version-wrap" style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;"><span>v2.0.0</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -671,7 +671,7 @@ function replayLock() {
 }
 function downloadReplay() {
   if (!replayLog.length) return;
-  const header = { format: 'minusfall-replay/v1', meta: { version: '1.5.131', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const header = { format: 'minusfall-replay/v1', meta: { version: '2.0.0', max: numLevel, date: new Date().toISOString(), score, level, lines } };
   const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
   const blob = new Blob([text], { type: 'application/jsonl' });
   const url = URL.createObjectURL(blob);
