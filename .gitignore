@@ -28,3 +28,6 @@ node_modules
 
 # Build artifacts (populated by update_mobile_app.sh / cap sync)
 www/index.html
+
+# Local test/scratch files
+test/

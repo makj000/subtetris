@@ -221,7 +221,7 @@ IPHONE_SPLASHES = {
     'splash-6.9inch.png': (1320, 2868),  # iPhone 16 Pro Max
     'splash-6.5inch.png': (1242, 2688),  # iPhone 11 Pro Max / XS Max
     'splash-6.3inch.png': (1206, 2622),  # iPhone 16 Pro
-    'splash-6.1inch.png': (1179, 2556),  # iPhone 16 / 15 / 14
+    'splash-6.1inch.png': (1170, 2532),  # iPhone 14 / 13 / 12 (App Store accepted size)
     'splash-5.5inch.png': (1242, 2208),  # iPhone 8 Plus / 7 Plus
     'splash-4.7inch.png': (750,  1334),  # iPhone SE (3rd gen) / 8 / 7
     'splash-4.0inch.png': (640,  1136),  # iPhone SE (1st gen) / 5s
