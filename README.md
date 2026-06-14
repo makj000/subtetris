@@ -1,8 +1,14 @@
-# Minusfall
+# MinusFall
+
+> **Subtetris has been renamed to MinusFall.**
 
 A falling-block puzzle where blocks carry numbers and rows are cleared by **subtraction** instead of deletion.
 
-Available on the [App Store](https://apps.apple.com/app/id) <!-- add your App ID here -->
+**[Try MinusFall in your browser](http://minusfall.gydd.com/)**
+
+[<img src="icons/splash-6.5inch.png" alt="MinusFall gameplay" width="360">](http://minusfall.gydd.com/)
+
+Also available on the [App Store](https://apps.apple.com/us/app/minusfall/id6761745947).
 
 ---
 
