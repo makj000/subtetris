@@ -5,11 +5,17 @@
   "main": "docs/index.html",
   "scripts": {
     "build": "echo 'No build step required — single HTML file'",
-    "cap:sync": "npx cap sync ios",
+    "cap:sync": "npx cap sync",
+    "cap:sync:ios": "npx cap sync ios",
+    "cap:sync:android": "npx cap sync android",
     "cap:ios": "npx cap open ios",
+    "cap:android": "npx cap open android",
+    "android:debug": "cd android && JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew assembleDebug",
+    "android:bundle": "cd android && JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" ANDROID_HOME=\"$HOME/Library/Android/sdk\" ./gradlew bundleRelease",
     "serve": "python3 -m http.server 3456 -d docs"
   },
   "dependencies": {
+    "@capacitor/android": "^6.2.1",
     "@capacitor/core": "^6.0.0",
     "@capacitor/ios": "^6.0.0"
   },
