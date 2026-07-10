@@ -202,6 +202,38 @@
       background: #1a3a6a;
       color: #fff;
     }
+    #demo-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(2,8,18,0.8);
+    }
+    #demo-card {
+      width: min(320px, calc(100vw - 32px));
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
+      background: #0d1f3c;
+      border: 1px solid #2a5498;
+      border-radius: 6px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+      padding: 14px;
+    }
+    #demo-caption {
+      font-size: 11px;
+      color: #aac;
+      line-height: 1.5;
+      margin: 0 0 10px 0;
+    }
+    #demo-img {
+      display: block;
+      width: 100%;
+      border: 1px solid #1e3a5f;
+      border-radius: 4px;
+    }
 
     /* Number level buttons (sidebar) */
     .nl-row { display: flex; gap: 4px; margin-top: 4px; }
@@ -377,7 +409,7 @@
 <!-- Mobile header (hidden on desktop) -->
 <div id="mob-header">
   <div class="mh-brand">
-    <div class="mh-title"><span class="mh-name"><span class="name-sub">MINUS</span><span class="name-rest">FALL</span></span><span class="version-wrap" style="align-self:center; margin-left:6px;"><span class="mh-ver">v2.0.0</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></span></div>
+    <div class="mh-title"><span class="mh-name"><span class="name-sub">MINUS</span><span class="name-rest">FALL</span></span><span class="version-wrap" style="align-self:center; margin-left:6px;"><span class="mh-ver">v2.0.2</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></span></div>
     <div class="mh-scores">
       <div class="mh-stat"><div class="mh-label">Score</div><div class="mh-val" id="m-score"></div></div>
       <div class="mh-stat"><div class="mh-label">Lvl</div><div class="mh-val" id="m-level"></div></div>
@@ -401,7 +433,7 @@
   <div id="sidebar">
     <div class="panel" style="flex: none; padding: 8px 10px 4px; text-align: center; border-bottom: none;">
       <div style="font-size:16px; font-weight:bold; letter-spacing:2px; text-shadow: 0 0 12px rgba(255,150,40,0.9), 0 0 28px rgba(255,100,0,0.5);"><span style="color:#7ab8d4;">MINUS</span><span style="color:#ffaa44;">FALL</span></div>
-      <div class="version-wrap" style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;"><span>v2.0.0</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></div>
+      <div class="version-wrap" style="font-size:9px; letter-spacing:1px; color:#778; font-weight:normal; margin-top:2px;"><span>v2.0.2</span><button type="button" class="help-btn" onclick="openInfoPopup(event)" aria-label="Open links">?</button></div>
     </div>
     <div class="panel">
       <h3>Score</h3>
@@ -428,8 +460,9 @@
     <div class="panel" style="flex: none; padding: 6px 10px; border-top: none;">
       <h3>Anim</h3>
       <div class="nl-row">
-        <button class="nl-btn active" id="slo-on"  onclick="setAnimSpeed('med')">ON</button>
-        <button class="nl-btn"        id="slo-off" onclick="setAnimSpeed('fast')">OFF</button>
+        <button class="nl-btn active" id="slo-on"   onclick="setAnimSpeed('med')">ON</button>
+        <button class="nl-btn"        id="slo-cine" onclick="setAnimSpeed('cine')">CINE</button>
+        <button class="nl-btn"        id="slo-off"  onclick="setAnimSpeed('fast')">OFF</button>
       </div>
     </div>
     <button onclick="startGame()" style="background:#7a3510;border:2px solid #c87941;border-top:none;border-radius:0 0 0 0;color:#ffd0a0;padding:11px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;letter-spacing:3px;width:100%;font-weight:bold;transition:background 0.15s;" onmouseover="this.style.background='#a04818'" onmouseout="this.style.background='#7a3510'">NEW GAME</button>
@@ -457,9 +490,21 @@
       <button type="button" class="info-close" onclick="closeInfoPopup()" aria-label="Close links">X</button>
     </div>
     <div class="info-links">
+      <a href="#" onclick="openDemo(event)">How to play — Demo</a>
       <a href="support.html" target="_blank" rel="noopener">Support</a>
       <a href="privacy.html" target="_blank" rel="noopener">Privacy</a>
     </div>
+  </div>
+</div>
+
+<div id="demo-popup" role="dialog" aria-modal="true" aria-label="Gameplay demo">
+  <div id="demo-card">
+    <div class="info-head">
+      <h2>How rows clear</h2>
+      <button type="button" class="info-close" onclick="closeDemo()" aria-label="Close demo">X</button>
+    </div>
+    <p id="demo-caption">When a row fills, its smallest number is subtracted from every block. Blocks that reach 0 vanish — the rest survive and fall.</p>
+    <img id="demo-img" alt="Minusfall gameplay demo">
   </div>
 </div>
 
@@ -520,15 +565,18 @@ let gameGen = 0; // incremented on each startGame(); stale async chains check th
 let replayLog = [], replayGameStart = 0, replayMoves = '', replayCurType = null, replayCurNums = null, replayCurSpawnT = 0;
 let numLevel = 4;
 const supportModel = 'cluster'; // fixed; controls hidden
-let animSpeed = 'med'; // 'med' | 'fast'
+let animSpeed = 'med'; // 'med' | 'cine' | 'fast'
 let highScore = parseInt(localStorage.getItem('subtetris_hi')       || '0', 10);
 let highLevel = parseInt(localStorage.getItem('subtetris_hi_lvl')   || '1', 10);
 let highLines = parseInt(localStorage.getItem('subtetris_hi_lines') || '0', 10);
 let scorePopups = [];
 const CLEAR_MS = 350;
 const FALL_MS = 350;
-function animDelay(ms)    { return animSpeed === 'med' ? Math.round(ms / 2) : 0; }
-function animDuration(ms) { return animSpeed === 'med' ? Math.round(ms / 2) : 1; }
+// CINE anim mode: subtract row numbers one cell at a time so the mechanic is
+// easy to follow. Absolute ms — not run through animDelay's /2 scaling.
+const CINE_HOLD_MS = 650, CINE_CELL_MS = 280;
+function animDelay(ms)    { return animSpeed === 'fast' ? 0 : Math.round(ms / 2); }
+function animDuration(ms) { return animSpeed === 'fast' ? 1 : Math.round(ms / 2); }
 const POPUP_MS = 1200;
 
 function openInfoPopup(e) {
@@ -544,6 +592,25 @@ function closeInfoPopup() {
 
 document.getElementById('info-popup').addEventListener('click', e => {
   if (e.target.id === 'info-popup') closeInfoPopup();
+});
+
+function openDemo(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  closeInfoPopup();
+  // Pause a running game so the player doesn't lose while watching
+  if (!gameOver && !paused && !clearing) togglePause();
+  const img = document.getElementById('demo-img');
+  img.src = ''; img.src = 'minusfall-demo.gif'; // reassign restarts the GIF
+  document.getElementById('demo-popup').style.display = 'flex';
+}
+
+function closeDemo() {
+  document.getElementById('demo-popup').style.display = 'none';
+  document.getElementById('demo-img').src = '';
+}
+
+document.getElementById('demo-popup').addEventListener('click', e => {
+  if (e.target.id === 'demo-popup') closeDemo();
 });
 
 // ── Sound engine ──
@@ -644,15 +711,17 @@ function cycleNumLevel() {
 
 function setAnimSpeed(speed) {
   animSpeed = speed;
-  const on  = document.getElementById('slo-on');
-  const off = document.getElementById('slo-off');
-  if (on)  on.classList.toggle('active',  speed === 'med');
-  if (off) off.classList.toggle('active', speed === 'fast');
+  const on   = document.getElementById('slo-on');
+  const cine = document.getElementById('slo-cine');
+  const off  = document.getElementById('slo-off');
+  if (on)   on.classList.toggle('active',   speed === 'med');
+  if (cine) cine.classList.toggle('active', speed === 'cine');
+  if (off)  off.classList.toggle('active',  speed === 'fast');
   const mb = document.getElementById('tc-slo');
-  if (mb) mb.innerHTML = 'ANIM<br>' + (speed === 'med' ? 'ON' : 'OFF');
+  if (mb) mb.innerHTML = 'ANIM<br>' + (speed === 'med' ? 'ON' : speed === 'cine' ? 'CINE' : 'OFF');
 }
 function cycleAnimSpeed() {
-  setAnimSpeed(animSpeed === 'med' ? 'fast' : 'med');
+  setAnimSpeed(animSpeed === 'med' ? 'cine' : animSpeed === 'cine' ? 'fast' : 'med');
 }
 
 function replayExtractNums(matrix) {
@@ -672,7 +741,7 @@ function replayLock() {
 }
 function downloadReplay() {
   if (!replayLog.length) return;
-  const header = { format: 'minusfall-replay/v1', meta: { version: '2.0.0', max: numLevel, date: new Date().toISOString(), score, level, lines } };
+  const header = { format: 'minusfall-replay/v1', meta: { version: '2.0.2', max: numLevel, date: new Date().toISOString(), score, level, lines } };
   const text = [header, ...replayLog].map(e => JSON.stringify(e)).join('\n');
   const blob = new Blob([text], { type: 'application/jsonl' });
   const url = URL.createObjectURL(blob);
@@ -919,6 +988,44 @@ function lock() {
     cleared++;
     clearingRows = [fullRow];
     sfx('clear');
+    if (animSpeed === 'cine') {
+      // Subtract one cell at a time, left to right, with a "−n" popup per cell,
+      // so the player can watch the mechanic. Row stays highlighted throughout.
+      const minNum = Math.min(...board[fullRow].map(cell => cell.num));
+      const zeroedCols = [];
+      const finishRow = () => {
+        clearingRows = [];
+        const chainMult = Math.pow(1.5, chainDepth);
+        const pts = Math.round(100 * level * Math.pow(minNum, 1.5) * chainMult);
+        earnedScore += pts;
+        scorePopups.push({
+          x: COLS * BLOCK / 2, y: boardTop + fullRow * BLOCK,
+          text: chainDepth > 0 ? `+${pts} ×${chainDepth+1}` : `+${pts}`,
+          startTime: performance.now()
+        });
+        setTimeout(() => {
+          if (gameGen !== myGen) return;
+          applyColumnFall(zeroedCols, fullRow, () => {
+            if (gameGen !== myGen) return;
+            const nextStart = board[fullRow].every(cell => cell !== null) ? fullRow : 0;
+            step(nextStart, chainDepth + 1);
+          });
+        }, animDelay(CLEAR_MS));
+      };
+      const tickCell = (c) => {
+        if (gameGen !== myGen) return;
+        if (c >= COLS) { finishRow(); return; }
+        board[fullRow][c].num -= minNum;
+        scorePopups.push({
+          x: c * BLOCK + BLOCK / 2, y: boardTop + fullRow * BLOCK + BLOCK / 2,
+          text: '-' + minNum, startTime: performance.now(), cell: true
+        });
+        if (board[fullRow][c].num <= 0) { board[fullRow][c] = null; zeroedCols.push(c); }
+        setTimeout(() => tickCell(c + 1), CINE_CELL_MS);
+      };
+      setTimeout(() => tickCell(0), CINE_HOLD_MS);
+      return;
+    }
     setTimeout(() => {
       if (gameGen !== myGen) return;
       const minNum = Math.min(...board[fullRow].map(cell => cell.num));
@@ -1197,13 +1304,13 @@ function draw() {
   for (const p of scorePopups) {
     const t = (now - p.startTime) / POPUP_MS;
     const alpha = 1 - t;
-    const rise = t * BLOCK * 5;
+    const rise = t * BLOCK * (p.cell ? 1.5 : 5);
     ctx.save();
     ctx.globalAlpha = alpha * 0.85;
-    ctx.font = 'bold 20px Courier New';
+    ctx.font = p.cell ? 'bold 16px Courier New' : 'bold 20px Courier New';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffe080';
+    ctx.fillStyle = p.cell ? '#fff0b0' : '#ffe080';
     ctx.fillText(p.text, p.x, p.y - rise);
     ctx.restore();
   }
@@ -1287,6 +1394,11 @@ function startGame() {
 document.addEventListener('keydown', e => {
   if (document.getElementById('info-popup').style.display === 'flex') {
     if (e.key === 'Escape') closeInfoPopup();
+    e.preventDefault();
+    return;
+  }
+  if (document.getElementById('demo-popup').style.display === 'flex') {
+    if (e.key === 'Escape') closeDemo();
     e.preventDefault();
     return;
   }

@@ -1,0 +1,8 @@
+{"format":"minusfall-replay/v1","meta":{"version":"2.0.1","max":4,"date":"2026-07-09T19:45:04.002Z","score":1631,"level":1,"lines":7}}
+{"t":0,"piece":"J","nums":[4,3,1,4],"moves":"DDDDDDDDDDDDDDDDD","rot":0,"col":3}
+{"t":1346,"piece":"L","nums":[4,4,2,3],"moves":"DDDDLLLDDDDDDDDDDDDD","rot":0,"col":0}
+{"t":2762,"piece":"I","nums":[2,4,1,2],"moves":"DDDDDDDRRRDDDDDDDDDD","rot":0,"col":6}
+{"t":7815,"piece":"T","nums":[3,3,3,1],"moves":"UDDDDDDDDDDDDDDD","rot":1,"col":3}
+{"t":9787,"piece":"Z","nums":[4,2,2,4],"moves":"DRURRRDDDDDDDDDDDDDDD","rot":1,"col":7}
+{"t":15477,"piece":"T","nums":[4,2,3,1],"moves":"URRDDDDDDDDDDDDDDD","rot":1,"col":5}
+{"t":17554,"piece":"T","nums":[4,2,1,2],"moves":"DDDLULULUDDDDDDDDDDDD","rot":3,"col":0}
