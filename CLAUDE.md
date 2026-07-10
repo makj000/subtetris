@@ -59,6 +59,7 @@ Highlight row → subtract & remove zeroed cells → animate falling blocks (eas
 
 Timing scales with **animation speed** setting (`animSpeed`):
 - **ON (med):** 175ms per phase (default)
+- **CINE (cine):** cinematic clears — the row stays highlighted while the min is subtracted **one cell at a time, left to right** (`CINE_HOLD_MS = 650` pause on the highlighted row, then `CINE_CELL_MS = 280` per cell — absolute ms, not scaled by `animDelay`). Each cell shows a small floating `−n` popup (`cell: true` popups: bold 16px `#fff0b0`, low rise) as its number ticks down; zeroed cells vanish individually. Cascade/fall phases then run at the normal ON pace. Makes the subtraction mechanic legible to new players.
 - **OFF (fast):** instant (0ms delays)
 
 `animDelay(ms)` controls `setTimeout` durations; `animDuration(ms)` controls render interpolation denominators — both must use the same scale factor so animations complete fully before the next phase fires.
@@ -84,12 +85,13 @@ Timing scales with **animation speed** setting (`animSpeed`):
 ## Desktop Layout
 
 Sidebar (130px wide, height matches canvas — 600px default, 663px when sum bar shown; set dynamically by `setSumBar`):
-- Title "MINUSFALL" (font-size 16px, letter-spacing 2px) + version below; a small `?` beside the version opens an info popup with Support and Privacy links
+- Title "MINUSFALL" (font-size 16px, letter-spacing 2px) + version below; a small `?` beside the version opens an info popup with links: "How to play — Demo", Support, Privacy
+- **Demo popup** (`#demo-popup`, z-index 60): opened via `openDemo()` from the info popup. Shows `docs/minusfall-demo.gif` (460×620 branded cine-mode replay, ~1.5MB) with a one-line caption explaining subtraction clears. Auto-pauses a running game (`togglePause()` unless game over/paused/clearing); GIF restarts on each open (src reassignment); closes via X, backdrop click, or Escape. Same popup serves desktop and mobile (`?` in mobile header).
 - Score — DSEG7 20px, dual-layer display (record in navy, current in orange); expands beyond 5 digits dynamically
 - Level + Lines (side by side) — same dual-layer digit display; Level min 2 digits, Lines min 3 digits
 - Next piece preview canvas (120×90, `flex: none`) — blocks drawn at BLOCK px size
 - **MAX #** — single cycling button, always active (burnt orange), label "MAX n", cycles 4→3→2→1→4
-- **Anim speed** selector: 2 buttons `[ON][OFF]` — active one highlighted burnt orange; ON = 175ms per phase, OFF = instant
+- **Anim speed** selector: 3 buttons `[ON][CINE][OFF]` — active one highlighted burnt orange; ON = 175ms per phase, CINE = per-cell cinematic subtraction, OFF = instant
 - NEW GAME button (burnt orange style)
 - **PAUSE button** (`#pause-btn`) below NEW GAME — navy blue (`#1a3a6a`/`#2a5498`) at rest; switches to burnt orange and label "RESUME" while paused; grayed out (opacity 0.35, no pointer events) when game over. Calls `togglePause()`.
 - **SAVE REPLAY button** (`#replay-btn`) below PAUSE — subtle dark style (`#071020`, `#1e3a5f`), rounded bottom corners. Calls `downloadReplay()`; no-ops if `replayLog` is empty.
@@ -133,7 +135,7 @@ Row 2: [  ][  ][    ][   ][   ][    ][▼]
 **Layout rules:**
 - `#touch-ctrl`: `display: grid; grid-template-columns: repeat(7, 50px); grid-template-rows: repeat(2, 50px); gap: 4px; justify-content: center`
 - All buttons are **50×50px squares** — positioned via `grid-column`/`grid-row` inline styles
-- ANIM (`tc-slo`) at `grid-column: 6; grid-row: 1` — toggles ON↔OFF; always navy blue; label "ANIM\nON" or "ANIM\nOFF"
+- ANIM (`tc-slo`) at `grid-column: 6; grid-row: 1` — cycles ON→CINE→OFF→ON; always navy blue; label "ANIM\nON" / "ANIM\nCINE" / "ANIM\nOFF"
 - Sound toggle moved to top bar (`mob-snd`)
 - MAX cycles 4→3→2→1→4, label "MAX n"; default MAX 4
 - **Row 2 columns 1–6 must remain empty (tc-blank).** Only `▼` at col 7 row 2 is used. The six left squares are reserved for a future ad banner — do not place any buttons there.
