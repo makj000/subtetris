@@ -217,6 +217,7 @@ No x-delta needed — `idealX = piece.x` is correct for all their rotation state
 - **`gameGen` counter** — incremented by `startGame()`; every `setTimeout` callback in `lock()`/`step()`/`applyGravityUntilStable()` captures `myGen = gameGen` at call time and returns early if `gameGen !== myGen`. Prevents stale callbacks from overwriting the new game's state or calling `endGame()` after NEW is pressed mid-clearing-chain
 - **Always bump the patch version** (in sidebar and mobile header — the `<title>` tag has no version) on every turn that makes any code change to `docs/index.html` — do this as the final step of that turn
 - **Always update CLAUDE.md** in the same turn as any change that affects game mechanics, UI, layout, or architecture — keep it the source of truth
+- **Google Analytics (GA4)** — `gtag.js` loaded via `<script async src="https://www.googletagmanager.com/gtag/js?id=G-DSBXH4D2NN">` in `<head>`, tracking ID `G-DSBXH4D2NN`. Required loosening the CSP: `script-src` now allows `https://www.googletagmanager.com`, and `connect-src` was changed from `'none'` to allow `google-analytics.com`/`analytics.google.com` (previously the page made zero network requests after load)
 - Serve via `python3 -m http.server 3456`
 
 ---
